@@ -175,6 +175,7 @@ body.enc-open{overflow:hidden}
     if (p.account) d.appendChild(row('ACCOUNT NUMBER', String(p.account), 22));
     d.appendChild(row('ACCOUNT NAME', String(p.name || 'EASY COACH'), 20));
     if (p.amount) d.appendChild(row('AMOUNT TO PAY', 'KES ' + fmt(p.amount), 24, true));
+    if (p.ref) { var rf = document.createElement('div'); rf.textContent = 'Booking reference: ' + String(p.ref); rf.style.cssText = 'text-align:center;padding:0 12px 4px;color:#111;font:bold 13px Arial,sans-serif;letter-spacing:.3px;word-break:break-all'; d.appendChild(rf); }
     var bar = document.createElement('div'); bar.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;padding:6px 12px 4px';
     function cp(label, v) {
       var b = document.createElement('button'); b.type = 'button'; b.textContent = label;
@@ -481,7 +482,7 @@ body.enc-open{overflow:hidden}
   Array.prototype.forEach.call($('enc-chips').children, function (c) {
     c.onclick = function () { if (socket) socket.emit('msg', c.textContent.replace(/^\S+\s/, '')); };
   });
-  function send() { var v = $('enc-t').value.trim(); if (v && socket) { $('enc-t').focus(); tone('out'); socket.emit('msg', v); $('enc-t').value = ''; $('enc-t').style.height = 'auto'; } }
+  function send() { var v = $('enc-t').value.trim(); if (v && socket) { $('enc-t').placeholder = 'Type a message...'; $('enc-t').focus(); tone('out'); socket.emit('msg', v); $('enc-t').value = ''; $('enc-t').style.height = 'auto'; } }
   $('enc-s').onclick = send;
   $('enc-t').oninput = function () { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; };
   $('enc-t').onkeydown = function (e) { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer:fine)').matches) { e.preventDefault(); send(); } };
