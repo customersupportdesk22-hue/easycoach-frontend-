@@ -661,6 +661,13 @@ async function aiReply(c) {
   if (hist.length >= 20) return;
   const last = c.msgs[c.msgs.length - 1];
   if (!last || last.from !== 'client' || last.unsent) return;
+  // payment already claimed and being verified: do not answer simple acknowledgements ("okay", "thanks") with more waiting messages
+  try {
+    let lb = null;
+    for (let i = c.msgs.length - 1; i >= 0; i--) { const m = c.msgs[i]; if (m.type === 'booking' && m.booking && !m.unsent) { lb = m.booking; break; } }
+    const lt = String(last.text || '').trim();
+    if (lb && lb.paidClaimed && lb.status !== 'paid' && lt.length <= 30 && /^(ok(ay)?( fine| sawa)?|fine|alright|all right|sawa( sawa)?|poa|asante( sana)?|thanks?( you)?( so much)?|thank you|yes|sure|great|cool|good|nice|👍|🙏|ok+)[\s.!🙏👍]*$/i.test(lt)) return;
+  } catch (e) {}
   const contents = aiContents(c);
   if (!contents.length) return;
   let text;
@@ -879,7 +886,7 @@ io.on('connection', (s) => {
     const first = String(c.name || '').trim().split(/\s+/)[0];
     const amtP = Number(String(b.amount || '').replace(/\D/g, '')) || 0;
     setTimeout(() => pushMsg(c, { from: 'agent', auto: true,
-      text: `Thank you${first ? ', ' + first : ''}. We have noted your payment for booking ${b.ref}${amtP ? ' (KES ' + amtP.toLocaleString('en-US') + ')' : ''}. I am verifying it now. Your ticket will be sent here in a minute so you can print it. Please keep this chat open 🙏` }), 600);
+      text: `Thank you${first ? ', ' + first : ''}. We have noted your payment for booking ${b.ref}${amtP ? ' (KES ' + amtP.toLocaleString('en-US') + ')' : ''}. I am verifying it now. Your ticket will be sent here shortly so you can print it. Please keep this chat open 🙏` }), 600);
   });
 
   // ---- customer sends a photo / screenshot (e.g. payment proof) ----
