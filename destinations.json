@@ -1,20 +1,602 @@
-[
-  "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Thika", "Malindi", "Kitale", "Garissa", "Kakamega",
-  "Nyeri", "Meru", "Machakos", "Naivasha", "Nanyuki", "Embu", "Kericho", "Voi", "Kilifi", "Diani", "Ukunda",
-  "Watamu", "Lamu", "Wajir", "Mandera", "Marsabit", "Isiolo", "Chuka", "Kisii", "Bomet", "Narok", "Kajiado",
-  "Kiambu", "Muranga", "Karatina", "Nyahururu", "Rumuruti", "Maralal", "Lodwar", "Kapenguria", "Webuye", 
-  "Bungoma", "Busia", "Siaya", "Bondo", "Homa Bay", "Migori", "Kilgoris", "Keroka", "Nyamira", "Sotik", 
-  "Litein", "Kapsabet", "Iten", "Kapsowar", "Kabarnet", "Eldama Ravine", "Molo", "Mai Mahiu", "Limuru", 
-  "Ruiru", "Juja", "Kitui", "Mwingi", "Wote", "Makueni", "Mwatate", "Taveta", "Mtito Andei", "Mariakani", 
-  "Mtwapa", "Garsen", "Hola", "Bura", "Mumias", "Chogoria", "Kibirichia", "Maua", "Nkubu", "Timau", 
-  "Naro Moru", "Kajiado", "Ongata Rongai", "Kitengela", "Athi River", "Machakos", "Wundanyi", "Voi", 
-  "Mwatate", "Bomet", "Kaplong", "Sotik", "Chebole", "Tenwek", "Kisii", "Keroka", "Nyamache", "Ogembo", 
-  "Gucha", "Migori", "Rongo", "Awendo", "Kihancha", "Suna", "Mbita", "Homa Bay", "Oyugis", "Kendu Bay", 
-  "Rangwe", "Ndhiwa", "Rongo", "Muhoroni", "Ahero", "Bondo", "Usenge", "Sega", "Port Victoria", "Busia", 
-  "Malaba", "Bumala", "Funyula", "Amagoro", "Kitale", "Kiminini", "Endebess", "Kwanza", "Kapsara", 
-  "Cherangany", "Moi's Bridge", "Turbo", "Eldoret", "Soy", "Kapsabet", "Nandi Hills", "Kaimosi", 
-  "Chavakali", "Mbale", "Vihiga", "Majengo", "Luanda", "Maseno", "Kombewa", "Bondo", "Yala", "Gem", 
-  "Sidindi", "Ugunja", "Ukwala", "Bondo", "Narok", "Suswa", "Ewaso Ngiro", "Kilgoris", "Lolgorian", 
-  "Mulot", "Ololulunga", "Mau Narok", "Naivasha", "Gilgil", "Elementaita", "Njoro", "Mauche", "Keringet", 
-  "Molo", "Elburgon", "Salgaa", "Rongai", "Subukia", "Bahati", "Kabazi", "Ol Kalou", "Gilgil"
-]
+{
+ "_note": "fare = normal seat price for any trip to/from this town that has no exact route in routes.json. Coast towns 2800, all others 1600. Edit freely. For a trip between two towns the higher fare is used.",
+ "default_fare": 1600,
+ "destinations": [
+  {
+   "name": "Nairobi",
+   "fare": 1600
+  },
+  {
+   "name": "Mombasa",
+   "fare": 2800
+  },
+  {
+   "name": "Kisumu",
+   "fare": 1600
+  },
+  {
+   "name": "Nakuru",
+   "fare": 1600
+  },
+  {
+   "name": "Eldoret",
+   "fare": 1600
+  },
+  {
+   "name": "Thika",
+   "fare": 1600
+  },
+  {
+   "name": "Malindi",
+   "fare": 2800
+  },
+  {
+   "name": "Kitale",
+   "fare": 1600
+  },
+  {
+   "name": "Garissa",
+   "fare": 1600
+  },
+  {
+   "name": "Kakamega",
+   "fare": 1600
+  },
+  {
+   "name": "Nyeri",
+   "fare": 1600
+  },
+  {
+   "name": "Meru",
+   "fare": 1600
+  },
+  {
+   "name": "Machakos",
+   "fare": 1600
+  },
+  {
+   "name": "Naivasha",
+   "fare": 1600
+  },
+  {
+   "name": "Nanyuki",
+   "fare": 1600
+  },
+  {
+   "name": "Embu",
+   "fare": 1600
+  },
+  {
+   "name": "Kericho",
+   "fare": 1600
+  },
+  {
+   "name": "Voi",
+   "fare": 2800
+  },
+  {
+   "name": "Kilifi",
+   "fare": 2800
+  },
+  {
+   "name": "Diani",
+   "fare": 2800
+  },
+  {
+   "name": "Ukunda",
+   "fare": 2800
+  },
+  {
+   "name": "Watamu",
+   "fare": 2800
+  },
+  {
+   "name": "Lamu",
+   "fare": 2800
+  },
+  {
+   "name": "Wajir",
+   "fare": 1600
+  },
+  {
+   "name": "Mandera",
+   "fare": 1600
+  },
+  {
+   "name": "Marsabit",
+   "fare": 1600
+  },
+  {
+   "name": "Isiolo",
+   "fare": 1600
+  },
+  {
+   "name": "Chuka",
+   "fare": 1600
+  },
+  {
+   "name": "Kisii",
+   "fare": 1600
+  },
+  {
+   "name": "Bomet",
+   "fare": 1600
+  },
+  {
+   "name": "Narok",
+   "fare": 1600
+  },
+  {
+   "name": "Kajiado",
+   "fare": 1600
+  },
+  {
+   "name": "Kiambu",
+   "fare": 1600
+  },
+  {
+   "name": "Muranga",
+   "fare": 1600
+  },
+  {
+   "name": "Karatina",
+   "fare": 1600
+  },
+  {
+   "name": "Nyahururu",
+   "fare": 1600
+  },
+  {
+   "name": "Rumuruti",
+   "fare": 1600
+  },
+  {
+   "name": "Maralal",
+   "fare": 1600
+  },
+  {
+   "name": "Lodwar",
+   "fare": 1600
+  },
+  {
+   "name": "Kapenguria",
+   "fare": 1600
+  },
+  {
+   "name": "Webuye",
+   "fare": 1600
+  },
+  {
+   "name": "Bungoma",
+   "fare": 1600
+  },
+  {
+   "name": "Busia",
+   "fare": 1600
+  },
+  {
+   "name": "Siaya",
+   "fare": 1600
+  },
+  {
+   "name": "Bondo",
+   "fare": 1600
+  },
+  {
+   "name": "Homa Bay",
+   "fare": 1600
+  },
+  {
+   "name": "Migori",
+   "fare": 1600
+  },
+  {
+   "name": "Kilgoris",
+   "fare": 1600
+  },
+  {
+   "name": "Keroka",
+   "fare": 1600
+  },
+  {
+   "name": "Nyamira",
+   "fare": 1600
+  },
+  {
+   "name": "Sotik",
+   "fare": 1600
+  },
+  {
+   "name": "Litein",
+   "fare": 1600
+  },
+  {
+   "name": "Kapsabet",
+   "fare": 1600
+  },
+  {
+   "name": "Iten",
+   "fare": 1600
+  },
+  {
+   "name": "Kapsowar",
+   "fare": 1600
+  },
+  {
+   "name": "Kabarnet",
+   "fare": 1600
+  },
+  {
+   "name": "Eldama Ravine",
+   "fare": 1600
+  },
+  {
+   "name": "Molo",
+   "fare": 1600
+  },
+  {
+   "name": "Mai Mahiu",
+   "fare": 1600
+  },
+  {
+   "name": "Limuru",
+   "fare": 1600
+  },
+  {
+   "name": "Ruiru",
+   "fare": 1600
+  },
+  {
+   "name": "Juja",
+   "fare": 1600
+  },
+  {
+   "name": "Kitui",
+   "fare": 1600
+  },
+  {
+   "name": "Mwingi",
+   "fare": 1600
+  },
+  {
+   "name": "Wote",
+   "fare": 1600
+  },
+  {
+   "name": "Makueni",
+   "fare": 1600
+  },
+  {
+   "name": "Mwatate",
+   "fare": 2800
+  },
+  {
+   "name": "Taveta",
+   "fare": 2800
+  },
+  {
+   "name": "Mtito Andei",
+   "fare": 1600
+  },
+  {
+   "name": "Mariakani",
+   "fare": 2800
+  },
+  {
+   "name": "Mtwapa",
+   "fare": 2800
+  },
+  {
+   "name": "Garsen",
+   "fare": 2800
+  },
+  {
+   "name": "Hola",
+   "fare": 2800
+  },
+  {
+   "name": "Bura",
+   "fare": 2800
+  },
+  {
+   "name": "Mumias",
+   "fare": 1600
+  },
+  {
+   "name": "Chogoria",
+   "fare": 1600
+  },
+  {
+   "name": "Kibirichia",
+   "fare": 1600
+  },
+  {
+   "name": "Maua",
+   "fare": 1600
+  },
+  {
+   "name": "Nkubu",
+   "fare": 1600
+  },
+  {
+   "name": "Timau",
+   "fare": 1600
+  },
+  {
+   "name": "Naro Moru",
+   "fare": 1600
+  },
+  {
+   "name": "Ongata Rongai",
+   "fare": 1600
+  },
+  {
+   "name": "Kitengela",
+   "fare": 1600
+  },
+  {
+   "name": "Athi River",
+   "fare": 1600
+  },
+  {
+   "name": "Wundanyi",
+   "fare": 2800
+  },
+  {
+   "name": "Kaplong",
+   "fare": 1600
+  },
+  {
+   "name": "Chebole",
+   "fare": 1600
+  },
+  {
+   "name": "Tenwek",
+   "fare": 1600
+  },
+  {
+   "name": "Nyamache",
+   "fare": 1600
+  },
+  {
+   "name": "Ogembo",
+   "fare": 1600
+  },
+  {
+   "name": "Gucha",
+   "fare": 1600
+  },
+  {
+   "name": "Rongo",
+   "fare": 1600
+  },
+  {
+   "name": "Awendo",
+   "fare": 1600
+  },
+  {
+   "name": "Kihancha",
+   "fare": 1600
+  },
+  {
+   "name": "Suna",
+   "fare": 1600
+  },
+  {
+   "name": "Mbita",
+   "fare": 1600
+  },
+  {
+   "name": "Oyugis",
+   "fare": 1600
+  },
+  {
+   "name": "Kendu Bay",
+   "fare": 1600
+  },
+  {
+   "name": "Rangwe",
+   "fare": 1600
+  },
+  {
+   "name": "Ndhiwa",
+   "fare": 1600
+  },
+  {
+   "name": "Muhoroni",
+   "fare": 1600
+  },
+  {
+   "name": "Ahero",
+   "fare": 1600
+  },
+  {
+   "name": "Usenge",
+   "fare": 1600
+  },
+  {
+   "name": "Sega",
+   "fare": 1600
+  },
+  {
+   "name": "Port Victoria",
+   "fare": 1600
+  },
+  {
+   "name": "Malaba",
+   "fare": 1600
+  },
+  {
+   "name": "Bumala",
+   "fare": 1600
+  },
+  {
+   "name": "Funyula",
+   "fare": 1600
+  },
+  {
+   "name": "Amagoro",
+   "fare": 1600
+  },
+  {
+   "name": "Kiminini",
+   "fare": 1600
+  },
+  {
+   "name": "Endebess",
+   "fare": 1600
+  },
+  {
+   "name": "Kwanza",
+   "fare": 1600
+  },
+  {
+   "name": "Kapsara",
+   "fare": 1600
+  },
+  {
+   "name": "Cherangany",
+   "fare": 1600
+  },
+  {
+   "name": "Moi's Bridge",
+   "fare": 1600
+  },
+  {
+   "name": "Turbo",
+   "fare": 1600
+  },
+  {
+   "name": "Soy",
+   "fare": 1600
+  },
+  {
+   "name": "Nandi Hills",
+   "fare": 1600
+  },
+  {
+   "name": "Kaimosi",
+   "fare": 1600
+  },
+  {
+   "name": "Chavakali",
+   "fare": 1600
+  },
+  {
+   "name": "Mbale",
+   "fare": 1600
+  },
+  {
+   "name": "Vihiga",
+   "fare": 1600
+  },
+  {
+   "name": "Majengo",
+   "fare": 1600
+  },
+  {
+   "name": "Luanda",
+   "fare": 1600
+  },
+  {
+   "name": "Maseno",
+   "fare": 1600
+  },
+  {
+   "name": "Kombewa",
+   "fare": 1600
+  },
+  {
+   "name": "Yala",
+   "fare": 1600
+  },
+  {
+   "name": "Gem",
+   "fare": 1600
+  },
+  {
+   "name": "Sidindi",
+   "fare": 1600
+  },
+  {
+   "name": "Ugunja",
+   "fare": 1600
+  },
+  {
+   "name": "Ukwala",
+   "fare": 1600
+  },
+  {
+   "name": "Suswa",
+   "fare": 1600
+  },
+  {
+   "name": "Ewaso Ngiro",
+   "fare": 1600
+  },
+  {
+   "name": "Lolgorian",
+   "fare": 1600
+  },
+  {
+   "name": "Mulot",
+   "fare": 1600
+  },
+  {
+   "name": "Ololulunga",
+   "fare": 1600
+  },
+  {
+   "name": "Mau Narok",
+   "fare": 1600
+  },
+  {
+   "name": "Gilgil",
+   "fare": 1600
+  },
+  {
+   "name": "Elementaita",
+   "fare": 1600
+  },
+  {
+   "name": "Njoro",
+   "fare": 1600
+  },
+  {
+   "name": "Mauche",
+   "fare": 1600
+  },
+  {
+   "name": "Keringet",
+   "fare": 1600
+  },
+  {
+   "name": "Elburgon",
+   "fare": 1600
+  },
+  {
+   "name": "Salgaa",
+   "fare": 1600
+  },
+  {
+   "name": "Rongai",
+   "fare": 1600
+  },
+  {
+   "name": "Subukia",
+   "fare": 1600
+  },
+  {
+   "name": "Bahati",
+   "fare": 1600
+  },
+  {
+   "name": "Kabazi",
+   "fare": 1600
+  },
+  {
+   "name": "Ol Kalou",
+   "fare": 1600
+  }
+ ]
+}
