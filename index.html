@@ -524,7 +524,7 @@
     <h2 class="pt-title" style="margin-bottom:6px;">Help &amp; Support</h2>
     <p class="sec-sub">Our support team is available 24/7 to assist you.</p>
     <div class="why-card"><div class="why-icon w-green">💬</div><div><div class="why-title">Live Chat</div><div class="why-text">Tap the chat button at the bottom right of your screen to talk to us instantly.</div></div></div>
-    <a href="tel:+254709221544" class="help-btn call" style="margin-top:4px;"><div class="help-icon">📞</div><div><div style="font-size:15px;">Call Support</div><div style="font-size:12px;font-weight:400;opacity:0.8;">0709 221 544</div></div></a>
+    <a href="tel:+254709221533" class="help-btn call" style="margin-top:4px;"><div class="help-icon">📞</div><div><div style="font-size:15px;">Call Support</div><div style="font-size:12px;font-weight:400;opacity:0.8;">0709 221 533</div></div></a>
   </div>
 </div>
 <div id="screen-results" class="screen">
@@ -1436,8 +1436,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var t=e.target;
     setTimeout(function(){ try{ t.scrollIntoView({block:'center',behavior:'smooth'}); }catch(_){} },250);
   });
-  document.addEventListener('focusout',function(){
-    setTimeout(function(){ if(!isField(document.activeElement)) document.body.classList.remove('kb-open'); },150);
+  function clearKb(){ if(!isField(document.activeElement)) document.body.classList.remove('kb-open'); }
+  document.addEventListener('focusout',function(){ setTimeout(clearKb,150); });
+  /* FIX: bottom nav vanished after menu / footer links because kb-open was left stuck */
+  document.addEventListener('click',function(e){ if(!isField(e.target)) setTimeout(clearKb,50); },true);
+  ['pageshow','visibilitychange','focus','resize','orientationchange'].forEach(function(ev){
+    (ev==='visibilitychange'?document:window).addEventListener(ev,function(){ setTimeout(clearKb,100); });
+  });
+  ['showScreen','toggleMenu','closeMenu','goAuth'].forEach(function(n){
+    var f=window[n]; if(typeof f!=='function') return;
+    window[n]=function(){
+      var a=document.activeElement; if(a && isField(a)) try{a.blur();}catch(_){}
+      document.body.classList.remove('kb-open');
+      return f.apply(this,arguments);
+    };
   });
 })();
 </script>
