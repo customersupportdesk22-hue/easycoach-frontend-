@@ -1316,7 +1316,9 @@ setLang(window.easyCoachLang, false);
 <script>
 /* Easy Coach update: footer, boarding/dropping points, gallery */
 const BUS_BASE=((document.querySelector('script[src*="enhance.js"]')||{src:''}).src.replace(/\/enhance\.js.*$/,''))+'/buses/';
-const NAIROBI_STOPS=['KPCU Office','Uthiru','Afya Center','Mutharakwa','Eastleigh','Gill House','Fedha','Allsops','Bee Center','Rongai','River Road','Kayole Junction','Kangemi','Kasarani','Kawangware','Ngong','Kitengela','Kibera','Utawala','Jogoo Road','Kenyatta Market','Kiserian','Civil Servant (Dandora)','Ruai','Mlolongo','Haile Selassie','Hillocks','Lucky Summer','Kariobangi North','Sunton'];
+const NAIROBI_STOPS_NEW=['Railways Go-down - Haile Selassie Avenue','Uchumi Aga Khan Walk','Uchumi Koinange - Monrovia/Koinange Street','Uchumi Westlands - Westlands Square','Uchumi Adams - Ngong Road','Uchumi Langata Hyper','Uchumi Capital Centre - Mombasa Road','Uchumi Jogoo Road','Uchumi Buruburu','Nakumatt Lifestyle','Nakumatt Haile Selassie','Nakumatt Mega - Nyayo Stadium area','Nakumatt Embakasi - Old Airport Road','Naivas Donholm - Eastgate','Isiolo Road - Industrial Area','Uchumi Ngong Hyper','Uchumi Taj Mall - Embakasi','Naivas Hazina Road - South B'];
+const NAIROBI_STOPS_OLD=['KPCU Office','Uthiru','Afya Center','Mutharakwa','Eastleigh','Gill House','Fedha','Allsops','Bee Center','Rongai','River Road','Kayole Junction','Kangemi','Kasarani','Kawangware','Ngong','Kitengela','Kibera','Utawala','Jogoo Road','Kenyatta Market','Kiserian','Civil Servant (Dandora)','Ruai','Mlolongo','Hillocks','Lucky Summer','Kariobangi North','Sunton'];
+const NAIROBI_STOPS=NAIROBI_STOPS_NEW.concat(NAIROBI_STOPS_OLD);
 /* Add real boarding/dropping points per town here, in lowercase town name.
    Example:  mombasa: ['Mombasa Office','Mtwapa','Nyali'],  */
 const TOWN_STOPS={
