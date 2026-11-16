@@ -895,6 +895,12 @@ io.on('connection', (s) => {
 
 // Root Route
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// Admin settings page (admin.html sits next to server.js, so it must be served explicitly)
+const sendAdmin = (req, res) => res.sendFile(path.join(__dirname, 'admin.html'));
+app.get(['/admin', '/admin.html'], (req, res) => {
+  const pub = path.join(__dirname, 'public', 'admin.html');
+  require('fs').existsSync(pub) ? res.sendFile(pub) : sendAdmin(req, res);
+});
 app.get('/routes.json', (req, res) => res.sendFile(path.join(__dirname, 'routes.json')));
 app.get('/destinations.json', (req, res) => res.sendFile(path.join(__dirname, 'destinations.json')));
 app.get('/schedules.json', (req, res) => res.sendFile(path.join(__dirname, 'schedules.json')));
