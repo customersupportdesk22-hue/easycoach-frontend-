@@ -12,7 +12,7 @@
 #enc-box{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;background:#f0f2f5;display:none;flex-direction:column;overflow:hidden;z-index:99999;font-family:system-ui,sans-serif}
 #enc-box header{background:#d71920;color:#fff;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;display:flex;align-items:center;gap:10px}
 #enc-back{background:none;border:0;color:#fff;font-size:26px;line-height:1;padding:4px 8px;cursor:pointer}
-#enc-av{width:40px;height:40px;border-radius:50%;background:#d71920;display:flex;align-items:center;justify-content:center;font-weight:700}
+#enc-av{min-width:96px;height:38px;border-radius:8px;background:#d71920;display:flex;align-items:center;justify-content:center;font-weight:700}
 #enc-ti{display:flex;flex-direction:column;line-height:1.25}
 #enc-ti b{font-size:16px}
 #enc-ti small{font-size:12px;color:#b9f5d0}
@@ -111,8 +111,8 @@ body.enc-open{overflow:hidden}
   document.body.appendChild(box); document.body.appendChild(lbl); document.body.appendChild(btn);
   (function () {
     var av = document.getElementById('enc-av'), im = new Image();
-    im.onload = function () { av.textContent = ''; av.style.background = '#fff'; im.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:contain'; av.appendChild(im); };
-    im.src = base + '/logo.svg';
+    im.onload = function () { av.textContent = ''; av.style.background = '#fff'; im.style.cssText = 'width:100%;height:100%;border-radius:8px;object-fit:contain'; av.appendChild(im); };
+    im.src = base + '/images/logo.webp';
   })();
 
   var $ = function (id) { return document.getElementById(id); };
@@ -168,7 +168,7 @@ body.enc-open{overflow:hidden}
       r.appendChild(l); r.appendChild(v); return r;
     }
     var h = document.createElement('div'); h.style.cssText = 'background:#2f9e44;color:#fff;padding:10px 12px;display:flex;align-items:center;gap:10px';
-    var lg = document.createElement('img'); lg.src = base + '/logo.svg?v=2'; lg.style.cssText = 'width:38px;height:38px;border-radius:50%;background:#fff;object-fit:contain';
+    var lg = document.createElement('img'); lg.src = base + '/images/logo.webp'; lg.style.cssText = 'height:36px;width:auto;max-width:110px;border-radius:6px;background:#fff;padding:2px 4px;object-fit:contain';
     var t = document.createElement('div'); t.innerHTML = '<b style="font:bold 17px Arial,sans-serif">EASY COACH</b><br><span style="font:11px Arial,sans-serif;color:#d7f5dd">OFFICIAL PAYMENT DETAILS</span>';
     h.appendChild(lg); h.appendChild(t); d.appendChild(h);
     d.appendChild(row(String(p.accountLabel || 'Paybill').toUpperCase() + ' NUMBER', String(p.number || ''), 26));
@@ -208,7 +208,7 @@ body.enc-open{overflow:hidden}
     var s = document.createElement('span'); s.className = 'enc-lg';
     var im = new Image();
     im.onerror = function () { s.removeChild(im); s.textContent = 'E'; s.style.background = '#ff5c00'; };
-    im.src = base + '/logo.svg'; im.alt = ''; s.appendChild(im);
+    im.src = base + '/images/logo.webp'; im.alt = ''; s.appendChild(im);
     return s;
   }
   function decorate(d, m) {
