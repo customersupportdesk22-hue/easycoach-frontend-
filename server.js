@@ -1,4 +1,5 @@
 const express = require('express');
+const AGENT_URL = process.env.AGENT_URL || 'https://easycoach-frontend.onrender.com/agent.html';
 const http = require('http');
 const { Server } = require('socket.io');
 const { MongoClient } = require('mongodb');
@@ -343,7 +344,7 @@ function aiFail(msg, who) {
   console.error('AI error:', msg);
   if (Date.now() - aiState.lastAlertAt > 10 * 60000) {
     aiState.lastAlertAt = Date.now();
-    chatTelegram(`⚠️ AI assistant could not reply${who ? ' to ' + who : ''}: ${msg}\n\nPlease reply: /agent.html`);
+    chatTelegram(`⚠️ AI assistant could not reply${who ? ' to ' + who : ''}: ${msg}\n\nPlease reply: ${AGENT_URL}`);
   }
 }
 
@@ -685,7 +686,7 @@ async function aiReply(c) {
       };
       pushMsg(c, { from: 'client', type: 'booking', booking,
         text: `🎫 Booking ${ref}: ${booking.from} → ${booking.to}, ${booking.date}, KES ${booking.amount} (made by AI assistant)` });
-      chatTelegram(`💳 AI BOOKING - awaiting payment${/^0[17]\d{8}$/.test(booking.phone) ? '' : '\n⚠️ PHONE NUMBER LOOKS INVALID - confirm with customer'}\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date}\nAmount: KES ${booking.amount}\n\nReply: /agent.html`);
+      chatTelegram(`💳 AI BOOKING - awaiting payment${/^0[17]\d{8}$/.test(booking.phone) ? '' : '\n⚠️ PHONE NUMBER LOOKS INVALID - confirm with customer'}\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date}\nAmount: KES ${booking.amount}\n\nReply: ${AGENT_URL}`);
     }
   }
   if (wantPay && paymentMode === 'automatic') {
@@ -709,10 +710,10 @@ async function aiReply(c) {
   if (payNow && paymentMode !== 'automatic') {
     aiHold[c.id] = true;
     const b = pendingBooking(c);
-    chatTelegram(`💳 PAYMENT ACTION REQUIRED (${paymentMode === 'stk' ? 'MANUAL STK PUSH' : 'ADMIN PAYMENT DETAILS'})\n${c.name} (${c.phone})\nBooking: ${b ? b.ref : 'Not yet assigned'}\nAmount: KES ${b ? b.amount : ((payM && payM[1]) || 'To confirm')}\nPlease take action in Agent Chat: /agent.html`);
+    chatTelegram(`💳 PAYMENT ACTION REQUIRED (${paymentMode === 'stk' ? 'MANUAL STK PUSH' : 'ADMIN PAYMENT DETAILS'})\n${c.name} (${c.phone})\nBooking: ${b ? b.ref : 'Not yet assigned'}\nAmount: KES ${b ? b.amount : ((payM && payM[1]) || 'To confirm')}\nPlease take action in Agent Chat: ${AGENT_URL}`);
   }
   if (handoff) aiHold[c.id] = true;
-  if (handoff && !(payNow && paymentMode !== 'automatic')) chatTelegram(`🙋 Customer waiting for YOUR reply (told to please wait)\n${c.name} (${c.phone}):\n"${clip(last.text, 200)}"\n\nReply: /agent.html`);
+  if (handoff && !(payNow && paymentMode !== 'automatic')) chatTelegram(`🙋 Customer waiting for YOUR reply (told to please wait)\n${c.name} (${c.phone}):\n"${clip(last.text, 200)}"\n\nReply: ${AGENT_URL}`);
 }
 
 function aiSchedule(c) {
@@ -790,7 +791,7 @@ io.on('connection', (s) => {
     };
     pushMsg(c, { from: 'client', type: 'booking', booking,
       text: `🎫 Booking ${ref}: ${booking.from} → ${booking.to}, ${booking.date} ${booking.time}, seat ${booking.seat}, KES ${booking.amount}` });
-    chatTelegram(`💳 BOOKING CHAT - awaiting payment\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date} ${booking.time}\nSeat: ${booking.seat}\nAmount: KES ${booking.amount}\n\nReply: /agent.html`);
+    chatTelegram(`💳 BOOKING CHAT - awaiting payment\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date} ${booking.time}\nSeat: ${booking.seat}\nAmount: KES ${booking.amount}\n\nReply: ${AGENT_URL}`);
     const sw = b.lang === 'sw';
     setTimeout(() => pushMsg(c, { from: 'agent', auto: true, text: sw
       ? `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali tuandikie nambari ya simu ya M-Pesa utakayotumia kulipa, kisha subiri ombi la M-Pesa au maelezo ya malipo kutoka kwetu. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`
@@ -808,8 +809,8 @@ io.on('connection', (s) => {
       setTimeout(() => pushMsg(c, { from: 'agent', auto: true,
         text: `Your booking ${pbk.ref} is waiting for payment${amtK ? ' of KES ' + amtK.toLocaleString('en-US') : ''}. Please pay, then tap "I have paid".` }), 400);
     } else aiSchedule(c);
-    if (isFirst) chatTelegram(`💬 NEW CHAT\n${c.name} (${c.phone})\n"${clip(text, 200)}"\n\nReply: /agent.html`);
-    else chatTelegram(`💬 ${c.name} (${c.phone}):\n"${clip(text, 200)}"\n\nReply: /agent.html`);
+    if (isFirst) chatTelegram(`💬 NEW CHAT\n${c.name} (${c.phone})\n"${clip(text, 200)}"\n\nReply: ${AGENT_URL}`);
+    else chatTelegram(`💬 ${c.name} (${c.phone}):\n"${clip(text, 200)}"\n\nReply: ${AGENT_URL}`);
   });
 
   // ---- customer tapped "I have paid" under the payment card ----
@@ -825,7 +826,7 @@ io.on('connection', (s) => {
     io.to(c.id).emit('msgUpdate', bm);
     pushMsg(c, { from: 'client', paidClaim: true, text: `✅ I have paid (booking ${b.ref}, KES ${b.amount})` });
     agents.emit('paidClaim', { id: c.id, ref: b.ref, name: c.name, phone: c.phone, amount: b.amount });
-    chatTelegram(`💰 CUSTOMER SAYS "I HAVE PAID"\n${c.name} (${c.phone})\nBooking: ${b.ref}\n${b.from} → ${b.to}, ${b.date} ${b.time}\nAmount: KES ${b.amount}\nVerify in M-Pesa, then send the ticket.\n\nReply: /agent.html`);
+    chatTelegram(`💰 CUSTOMER SAYS "I HAVE PAID"\n${c.name} (${c.phone})\nBooking: ${b.ref}\n${b.from} → ${b.to}, ${b.date} ${b.time}\nAmount: KES ${b.amount}\nVerify in M-Pesa, then send the ticket.\n\nReply: ${AGENT_URL}`);
     // always acknowledge straight away (the AI stays quiet for a while after a human sent the payment card)
     const first = String(c.name || '').trim().split(/\s+/)[0];
     const amtP = Number(String(b.amount || '').replace(/\D/g, '')) || 0;
@@ -853,7 +854,7 @@ io.on('connection', (s) => {
       await putFile(fid, mt[1], buf);
       const caption = clip(p.caption, 200);
       pushMsg(c, { from: 'client', type: 'image', file: fid, caption, text: '📷 Photo' + (caption ? ': ' + caption : '') });
-      chatTelegram(`📎 ${c.name} (${c.phone}) sent a photo${caption ? ': "' + caption + '"' : ''}\n\nReply: /agent.html`);
+      chatTelegram(`📎 ${c.name} (${c.phone}) sent a photo${caption ? ': "' + caption + '"' : ''}\n\nReply: ${AGENT_URL}`);
     } catch (e) {
       console.error('Chat file upload failed:', e.message);
       s.emit('fileError', 'Upload failed. Please try again.');
