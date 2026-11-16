@@ -1,0 +1,711 @@
+{
+  "operator": "Easy Coach (initial route data copied from the user ENA Coach project at their direction)",
+  "country": "Kenya",
+  "currency": "KES",
+  "fare_note": "Inherited starting fares from ENA Coach configuration at the user’s direction. Confirm against Easy Coach operational pricing before accepting live payments. Editable route file.",
+  "routes": [
+    {
+      "id": "INIT001",
+      "origin": "Port Victoria",
+      "stops": [
+        "Funyula",
+        "Bumala"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT002",
+      "origin": "Busia",
+      "stops": [
+        "Nambale",
+        "Kakamega",
+        "Kapsabet"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT003",
+      "origin": "Busia",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT004",
+      "origin": "Nairobi",
+      "stops": [
+        "Oyugis"
+      ],
+      "destination": "Kendu Bay",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT005",
+      "origin": "Nyadorera",
+      "stops": [
+        "Siaya",
+        "Nakuru"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT006",
+      "origin": "Usenge",
+      "stops": [
+        "Bondo",
+        "Kericho"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT007",
+      "origin": "Luanda",
+      "stops": [
+        "Kotieno",
+        "Ndori",
+        "Awasi"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT008",
+      "origin": "Kisumu",
+      "stops": [
+        "Ahero"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT009",
+      "origin": "Kendu Bay",
+      "stops": [
+        "Sondu",
+        "Kadongo",
+        "Nyamira"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT010",
+      "origin": "Oyugis",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT011",
+      "origin": "Mbita",
+      "stops": [
+        "Homa Bay",
+        "Kisii"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT012",
+      "origin": "Sori",
+      "stops": [
+        "Ndhiwa",
+        "Rodi Kopany",
+        "Rangwe"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT013",
+      "origin": "Sirare",
+      "stops": [
+        "Migori",
+        "Bomet"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT014",
+      "origin": "Kehancha",
+      "stops": [
+        "Awendo",
+        "Narok"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT015",
+      "origin": "Mbale",
+      "stops": [
+        "Majengo",
+        "Kisumu"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT016",
+      "origin": "Sori",
+      "stops": [
+        "Rongo"
+      ],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT017",
+      "origin": "Mbita",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT018",
+      "origin": "Kendu Bay",
+      "stops": [
+        "Oyugis",
+        "Bomet"
+      ],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT019",
+      "origin": "Kehancha",
+      "stops": [
+        "Kisii",
+        "Sotik",
+        "Narok"
+      ],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT020",
+      "origin": "Busia",
+      "stops": [
+        "Maseno",
+        "Kisumu"
+      ],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT021",
+      "origin": "Port Victoria",
+      "stops": [
+        "Siaya",
+        "Bondo",
+        "Ahero"
+      ],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT022",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Nakuru",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT023",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Eldoret",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT024",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kitale",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT025",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Webuye",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT026",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kimilili",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT027",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Malaba",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT028",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Mumias",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT029",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kaimosi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT030",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kericho",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT031",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Bomet",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT032",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Narok",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT033",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Voi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT034",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Bungoma",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT035",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kakamega",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT036",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kapsabet",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT037",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Busia",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT038",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kisumu",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT039",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Kisii",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT040",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Homa Bay",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT041",
+      "origin": "Nairobi",
+      "stops": [],
+      "destination": "Mombasa",
+      "fare_kes": 2500
+    },
+    {
+      "id": "INIT042",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Siaya",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT043",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Bondo",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT044",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Usenge",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT045",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Nyadorera",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT046",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Ahero",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT047",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Ugunja",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT048",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Maseno",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT049",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Luanda Kotieno",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT050",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Kotieno",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT051",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Ndori",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT052",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Awasi",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT053",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Majengo",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT054",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Mbale",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT055",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Port Victoria",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT056",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Funyula",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT057",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Bumala",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT058",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Keroka",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT059",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Nyamira",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT060",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Oyugis",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT061",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Sondu",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT062",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Mbita",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT063",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Migori",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT064",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Rongo",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT065",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Awendo",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT066",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Kehancha",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT067",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Sirare",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT068",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Sori",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT069",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Rodi Kopany",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT070",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Ndhiwa",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT071",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii",
+        "Homa Bay"
+      ],
+      "destination": "Rangwe",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT072",
+      "origin": "Nairobi",
+      "stops": [
+        "Bomet"
+      ],
+      "destination": "Sotik",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT073",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Kijauri",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT074",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Kenyenya",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT075",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Keumbu",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT076",
+      "origin": "Nairobi",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Magena",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT077",
+      "origin": "Keroka",
+      "stops": [
+        "Kisii"
+      ],
+      "destination": "Kehancha",
+      "fare_kes": 1600
+    },
+    {
+      "id": "INIT078",
+      "origin": "Maseno",
+      "stops": [
+        "Kisumu",
+        "Nakuru"
+      ],
+      "destination": "Nakuru",
+      "fare_kes": 1700
+    },
+    {
+      "id": "INIT079",
+      "origin": "Maseno",
+      "stops": [
+        "Kisumu"
+      ],
+      "destination": "Nairobi",
+      "fare_kes": 1700
+    }
+  ]
+}
