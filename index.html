@@ -357,7 +357,7 @@
 </style>
 
 <style>
-.ec-slider{position:relative;margin:12px 16px 0;border-radius:16px;overflow:hidden;aspect-ratio:16/10;background:#222;box-shadow:0 4px 16px rgba(0,0,0,.15);touch-action:pan-y}
+.ec-slider{position:relative;margin:12px 16px 0;border-radius:16px;overflow:hidden;aspect-ratio:16/10;background:linear-gradient(135deg,#f3e3e6,#fbf1f2);box-shadow:0 4px 16px rgba(0,0,0,.15);touch-action:pan-y}
 .ec-slider img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;opacity:0;transition:opacity .8s ease}
 .ec-slider img.on{opacity:1}
 .ec-dots{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:6px;z-index:2}
@@ -377,15 +377,15 @@
   </header>
   <div class="ec-slider" id="ecSlider" aria-label="Easy Coach buses">
     <img src="/images/slide-01.webp" alt="Easy Coach bus 1" class="on" fetchpriority="high" onerror="this.remove()">
-    <img src="/images/slide-02.webp" alt="Easy Coach bus 2" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-03.webp" alt="Easy Coach bus 3" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-04.webp" alt="Easy Coach bus 4" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-05.webp" alt="Easy Coach bus 5" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-06.webp" alt="Easy Coach bus 6" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-07.webp" alt="Easy Coach bus 7" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-08.webp" alt="Easy Coach bus 8" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-09.webp" alt="Easy Coach bus 9" decoding="async" onerror="this.remove()">
-    <img src="/images/slide-10.webp" alt="Easy Coach bus 10" decoding="async" onerror="this.remove()">
+    <img data-src="/images/slide-02.webp" alt="Easy Coach bus 2" decoding="async">
+    <img data-src="/images/slide-03.webp" alt="Easy Coach bus 3" decoding="async">
+    <img data-src="/images/slide-04.webp" alt="Easy Coach bus 4" decoding="async">
+    <img data-src="/images/slide-05.webp" alt="Easy Coach bus 5" decoding="async">
+    <img data-src="/images/slide-06.webp" alt="Easy Coach bus 6" decoding="async">
+    <img data-src="/images/slide-07.webp" alt="Easy Coach bus 7" decoding="async">
+    <img data-src="/images/slide-08.webp" alt="Easy Coach bus 8" decoding="async">
+    <img data-src="/images/slide-09.webp" alt="Easy Coach bus 9" decoding="async">
+    <img data-src="/images/slide-10.webp" alt="Easy Coach bus 10" decoding="async">
     <div class="ec-dots" id="ecDots"></div>
   </div>
   <div class="search-container">
@@ -1396,14 +1396,25 @@ document.addEventListener('DOMContentLoaded', function () {
   function init(){
     var box=document.getElementById('ecSlider'); if(!box) return;
     var dots=document.getElementById('ecDots'), cur=0, t, x0=null;
-    function slides(){return box.querySelectorAll('img');}
+    var all=Array.prototype.slice.call(box.querySelectorAll('img'));
+    function slides(){return all.filter(function(im){return im.dataset.ok==='1';});}
     function build(){dots.innerHTML='';slides().forEach(function(){dots.appendChild(document.createElement('i'));});}
     function show(n){var s=slides(); if(!s.length) return; cur=(n+s.length)%s.length;
-      s.forEach(function(im,i){im.classList.toggle('on',i===cur);});
+      all.forEach(function(im){im.classList.remove('on');}); s[cur].classList.add('on');
       var d=dots.children; for(var i=0;i<d.length;i++) d[i].classList.toggle('on',i===cur);}
     function play(){clearInterval(t); t=setInterval(function(){show(cur+1);},4000);}
-    slides().forEach(function(im){ var p=new Image(); p.src=im.getAttribute('src'); }); // preload every slide now
-    build(); show(0); play();
+    function ready(im){ if(im.dataset.ok==='1') return; im.dataset.ok='1'; build(); show(cur); }
+    // first photo loads alone (fast); the rest load one by one afterwards, so they never slow the first photo or the page
+    var queue=all.slice(1), started=false;
+    function next(){ var im=queue.shift(); if(!im) return;
+      im.onload=function(){ready(im); next();}; im.onerror=function(){im.remove(); next();}; im.src=im.getAttribute('data-src'); }
+    function startRest(){ if(started) return; started=true; next(); }
+    var first=all[0];
+    if(first){
+      if(first.complete && first.naturalWidth){ ready(first); startRest(); }
+      else { first.addEventListener('load',function(){ready(first); startRest();}); first.addEventListener('error',startRest); setTimeout(startRest,4000); }
+    }
+    build(); play();
     box.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
     box.addEventListener('touchend',function(e){if(x0===null) return; var dx=e.changedTouches[0].clientX-x0; x0=null;
       if(Math.abs(dx)>40){show(cur+(dx<0?1:-1)); play();}},{passive:true});
