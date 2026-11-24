@@ -902,7 +902,7 @@ io.on('connection', (s) => {
 
   s.on('hashpay:request', async (data) => {
     const c=chatSessions[s.data.id], ref=clip(data&&data.ref,24), phone=clip(data&&data.phone,24);
-    if(!c||!/^EASYCOACH-\\d{6}$/.test(ref)) return s.emit('hashpay:result',{ref,success:false,message:'Your chat session expired. Please refresh and try again.'});
+    if(!c||!/^EASYCOACH-\d{6}$/.test(ref)) return s.emit('hashpay:result',{ref,success:false,message:'Your chat session expired. Please refresh and try again.'});
     if(await getPaymentMode()!=='hashpay') return s.emit('hashpay:result',{ref,success:false,message:'HASHBACK STK payment is not currently enabled.'});
     const m=c.msgs.find(x=>x.type==='booking'&&x.booking&&x.booking.ref===ref), b=m&&m.booking;
     if(!b||b.status==='paid') return s.emit('hashpay:result',{ref,success:false,message:'This booking is not available for payment.'});
