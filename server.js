@@ -217,20 +217,26 @@ agents.use((s, next) =>
 // customer messages become "seen" (blue ticks) once we reply or an agent opens the chat
 function markSeen(c) {
   const ids = [];
-  c.msgs.forEach((m) => { if (m.from === 'client' && !m.seen) { m.seen = true; ids.push(m.id); } });
+  const seenAt = Date.now();
+  c.msgs.forEach((m) => {
+    if (m.from === 'client' && !m.seen) {
+      m.seen = true;
+      m.seenAt = seenAt;
+      ids.push({ id: m.id, seenAt });
+    }
+  });
   if (ids.length) io.to(c.id).emit('seen', ids);
 }
 function pushMsg(c, m) {
   m.t = Date.now();
+  if (m.from === 'client') m.deliveredAt = m.t;
   m.id = newId();
   c.msgs.push(m); c.last = m.t;
   if (m.from === 'client') c.unread++;
-  if (m.from === 'agent') markSeen(c);
   io.to(c.id).emit('msg', m);
   agents.emit('update', c);
   saveChat(c);
 }
-
 agents.on('connection', (s) => {
   s.emit('sessions', Object.values(chatSessions));
   s.on('reply', ({ id, text }) => {
@@ -313,8 +319,13 @@ agents.on('connection', (s) => {
     agents.emit('update', c); saveChat(c);
   });
   s.on('read', (id) => {
-    // only act when there is something to mark as read (prevents an endless update <-> read loop)
-    if (chatSessions[id] && chatSessions[id].unread) { chatSessions[id].unread = 0; markSeen(chatSessions[id]); saveChat(chatSessions[id]); agents.emit('update', chatSessions[id]); }
+    // Mark customer messages seen only when an agent opens this conversation.
+    const c = chatSessions[id];
+    if (!c) return;
+    const hadUnread = !!c.unread;
+    c.unread = 0;
+    markSeen(c);
+    if (hadUnread) { saveChat(c); agents.emit('update', c); }
   });
 });
 
