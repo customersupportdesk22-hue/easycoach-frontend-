@@ -29,7 +29,7 @@
 .pay .cp{background:#e7fbe9;color:#075E54;border:1px solid #25D366;border-radius:12px;padding:3px 10px;font-size:12px;margin-left:6px}
 .pay .amt{font-size:20px;color:#075E54}
 .pay p{margin:8px 0 0;font-size:12px;color:#6b7280}
-#enc-chips{display:none;gap:6px;padding:8px 12px 0;overflow-x:auto;white-space:nowrap;background:#fff}
+#enc-chips{display:none!important;gap:6px;padding:8px 12px 0;overflow-x:auto;white-space:nowrap;background:#fff}
 #enc-chips span{background:#e7fbe9;color:#075E54;border:1px solid #25D366;border-radius:16px;padding:6px 12px;font-size:13px;flex:0 0 auto}
 #enc-form,#enc-send{padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:8px;background:#fff;border-top:1px solid #eee}
 #enc-send{border-top:0}
