@@ -823,21 +823,21 @@ app.post('/api/ai-test', adminAuth, async (req, res) => {
 
 const HASHPAY_PROMPT_TTL = 120000;
 function easyHashPayPhone(phone) {
- const raw=String(phone||'').replace(/[\\s\\-().]/g,''); const digits=raw.replace(/\\D/g,'');
- if(/^0[17]\\d{8}$/.test(digits)) return '254'+digits.slice(1);
- if(/^254[17]\\d{8}$/.test(digits)) return digits;
- if(/^\\+254[17]\\d{8}$/.test(raw)) return digits;
+ const raw=String(phone||'').replace(/[\s\-().]/g,''); const digits=raw.replace(/\D/g,'');
+ if(/^0[17]\d{8}$/.test(digits)) return '254'+digits.slice(1);
+ if(/^254[17]\d{8}$/.test(digits)) return digits;
+ if(/^\+254[17]\d{8}$/.test(raw)) return digits;
  return '';
 }
 function sendEasyHashPayCard(c,b) {
  if(!c||!b||b.status==='paid') return;
- const amount=Number(String(b.amount||'').replace(/[^\\d]/g,''))||0;
+ const amount=Number(String(b.amount||'').replace(/[^\d]/g,''))||0;
  if(amount<1||c.msgs.some(m=>m.type==='hashpay'&&m.ref===b.ref&&!m.hiddenForClient)) return;
  pushMsg(c,{from:'agent',type:'hashpay',ref:b.ref,amount});
 }
 async function initiateEasyHashPay(c,b,phone) {
  const apiKey=process.env.HASHPAY_API_KEY, accountId=process.env.HASHPAY_ACCOUNT_ID||'HP139328';
- const msisdn=easyHashPayPhone(phone), amount=String(Number(String(b.amount||'').replace(/[^\\d]/g,''))||0);
+ const msisdn=easyHashPayPhone(phone), amount=String(Number(String(b.amount||'').replace(/[^\d]/g,''))||0);
  if(!apiKey||!msisdn||Number(amount)<1) { pushMsg(c,{from:'agent',type:'status',text:'We could not start the M-Pesa prompt because the payment details need checking. Please wait while Easy Coach assists you.'}); return false; }
  if(b.hashpay&&['initiating','initiated'].includes(b.hashpay.status)&&Date.now()-(b.hashpay.initiatedAt||b.hashpay.startedAt||0)<HASHPAY_PROMPT_TTL+30000) return false;
  const providerReference='PAY'+crypto.randomBytes(8).toString('hex').toUpperCase();
@@ -849,15 +849,15 @@ async function initiateEasyHashPay(c,b,phone) {
   if(!response.ok||data.success!==true||!(data.checkout_id||data.CheckoutRequestID)) {
    b.hashpay={status:'failed',accountId,msisdn,amount,failedAt:Date.now()}; saveChat(c);
    pushMsg(c,{from:'agent',type:'status',text:'We could not send your M-Pesa prompt just now. Please check the number and try again. 🙏'});
-   chatTelegram('⚠️ EASY COACH HASHPAY REQUEST FAILED\\nBooking: '+b.ref+'\\n'+String(data.message||data.ResponseDescription||'Provider rejected request').slice(0,180)); return false;
+   chatTelegram('⚠️ EASY COACH HASHPAY REQUEST FAILED\nBooking: '+b.ref+'\n'+String(data.message||data.ResponseDescription||'Provider rejected request').slice(0,180)); return false;
   }
   b.hashpay={status:'initiated',accountId,msisdn,amount,providerReference,checkoutId:String(data.checkout_id||data.CheckoutRequestID).slice(0,120),merchantRequestId:String(data.MerchantRequestID||'').slice(0,120),initiatedAt:Date.now()};
   saveChat(c);
   pushMsg(c,{from:'agent',type:'status',text:"Your booking's M-Pesa payment request is now being initiated. Kindly keep your phone nearby and follow the instructions on your screen. 🙏"});
-  chatTelegram('📲 EASY COACH HASHPAY STK INITIATED\\n'+c.name+' ('+c.phone+')\\nBooking: '+b.ref+'\\nAmount: KES '+amount+'\\nPhone: '+msisdn);
+  chatTelegram('📲 EASY COACH HASHPAY STK INITIATED\n'+c.name+' ('+c.phone+')\nBooking: '+b.ref+'\nAmount: KES '+amount+'\nPhone: '+msisdn);
   setTimeout(()=>{const h=b.hashpay;if(h&&h.status==='initiated'&&h.providerReference===providerReference&&b.status!=='paid'){h.status='failed';h.failedAt=Date.now();saveChat(c);pushMsg(c,{from:'agent',type:'status',text:'We have not received payment confirmation yet. If you already paid, please wait while Easy Coach verifies it. Otherwise, tap Pay on the payment card to try again. 🙏'});}},HASHPAY_PROMPT_TTL);
   return true;
- } catch(e) { b.hashpay={status:'failed',accountId,msisdn,amount,failedAt:Date.now()};saveChat(c);pushMsg(c,{from:'agent',type:'status',text:'We could not connect to the payment service just now. Please try again shortly. 🙏'});chatTelegram('⚠️ EASY COACH HASHPAY CONNECTION ERROR\\nBooking: '+b.ref+'\\n'+String(e.message).slice(0,160));return false; }
+ } catch(e) { b.hashpay={status:'failed',accountId,msisdn,amount,failedAt:Date.now()};saveChat(c);pushMsg(c,{from:'agent',type:'status',text:'We could not connect to the payment service just now. Please try again shortly. 🙏'});chatTelegram('⚠️ EASY COACH HASHPAY CONNECTION ERROR\nBooking: '+b.ref+'\n'+String(e.message).slice(0,160));return false; }
 }
 async function processEasyCoachHashPayWebhook(p) {
  const accountId=process.env.HASHPAY_ACCOUNT_ID||'HP139328';
@@ -869,17 +869,17 @@ async function processEasyCoachHashPayWebhook(p) {
  let found=null;
  for(const c of Object.values(chatSessions)){const m=c.msgs.find(x=>x.type==='booking'&&x.booking&&x.booking.hashpay&&x.booking.hashpay.providerReference===providerReference);if(m){found={c,m};break;}}
  if(!found){const db=(await clientPromise).db(DB_NAME);const doc=await db.collection('chats').findOne({msgs:{$elemMatch:{type:'booking','booking.hashpay.providerReference':providerReference}}});if(doc){const c=chatSessions[doc._id]||(chatSessions[doc._id]={id:doc._id,name:doc.name,phone:doc.phone,msgs:doc.msgs||[],unread:doc.unread||0,last:doc.last||0});const m=c.msgs.find(x=>x.type==='booking'&&x.booking&&x.booking.hashpay&&x.booking.hashpay.providerReference===providerReference);if(m)found={c,m};}}
- if(!found){chatTelegram('⚠️ EASY COACH HASHPAY PAYMENT NOT MATCHED\\n'+providerReference);return;}
- const b=found.m.booking,h=b.hashpay,expected=Number(String(b.amount||'').replace(/[^\\d]/g,''));
- if(b.status==='paid'||!h||h.accountId!==accountId||(h.checkoutId&&h.checkoutId!==String(p.CheckoutRequestID||''))||amount!==expected||msisdn!==easyHashPayPhone(h.msisdn)){chatTelegram('⚠️ EASY COACH HASHPAY PAYMENT MISMATCH - MANUAL REVIEW\\nBooking: '+b.ref+'\\nTransaction: '+txId);return;}
+ if(!found){chatTelegram('⚠️ EASY COACH HASHPAY PAYMENT NOT MATCHED\n'+providerReference);return;}
+ const b=found.m.booking,h=b.hashpay,expected=Number(String(b.amount||'').replace(/[^\d]/g,''));
+ if(b.status==='paid'||!h||h.accountId!==accountId||(h.checkoutId&&h.checkoutId!==String(p.CheckoutRequestID||''))||amount!==expected||msisdn!==easyHashPayPhone(h.msisdn)){chatTelegram('⚠️ EASY COACH HASHPAY PAYMENT MISMATCH - MANUAL REVIEW\nBooking: '+b.ref+'\nTransaction: '+txId);return;}
  const db=(await clientPromise).db(DB_NAME);
  try{await db.collection('hashpayTransactions').insertOne({_id:txId,providerReference,bookingRef:b.ref,accountId,amount,msisdn,checkoutId:h.checkoutId,receivedAt:Date.now()});}catch(e){if(e&&e.code===11000)return;throw e;}
  h.status='paid';h.transactionId=txId;h.receipt=String(p.TransactionReceipt||txId).slice(0,80);h.paidAt=Date.now();b.status='paid';b.paymentProvider='HashPay';b.paidClaimed=false;saveChat(found.c);
- const names=String(b.pax||'').replace(/\\(.*?\\)/g,'').split(',').map(x=>x.trim()).filter(Boolean),seats=String(b.seat||'').split(/[,\\s]+/).map(x=>x.trim()).filter(Boolean);
+ const names=String(b.pax||'').replace(/\(.*?\)/g,'').split(',').map(x=>x.trim()).filter(Boolean),seats=String(b.seat||'').split(/[,\s]+/).map(x=>x.trim()).filter(Boolean);
  const rows=names.length>1&&names.length===seats.length?names.map((name,i)=>({name,seat:seats[i],no:b.ref+'-'+(i+1)})):[{name:b.pax,seat:b.seat,no:b.ref}];
  rows.forEach(t=>pushMsg(found.c,{from:'agent',type:'ticket',ticket:{no:t.no,name:t.name,phone:b.phone||found.c.phone,from:b.from,to:b.to,date:b.date,time:b.time,bus:'',seat:t.seat,price:String(Math.round(expected/rows.length))},text:'Ticket '+t.no}));
  pushMsg(found.c,{from:'agent',text:'✅ Payment received and verified. Thank you for choosing Easy Coach. Your official ticket is above. Safe travels! 🚌'});saveChat(found.c);
- chatTelegram('✅ EASY COACH HASHPAY PAYMENT VERIFIED\\nBooking: '+b.ref+'\\nAmount: KES '+amount+'\\nReceipt: '+h.receipt+'\\nTickets issued automatically.');
+ chatTelegram('✅ EASY COACH HASHPAY PAYMENT VERIFIED\nBooking: '+b.ref+'\nAmount: KES '+amount+'\nReceipt: '+h.receipt+'\nTickets issued automatically.');
 }
 
 io.on('connection', (s) => {
