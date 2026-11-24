@@ -944,7 +944,7 @@ io.on('connection', (s) => {
       : (isHashPay
         ? `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please enter the M-Pesa number you will use to pay inside the HASHBACK payment card below, then tap Pay to receive the M-Pesa prompt. Your official ticket will be sent here once payment is confirmed.`
         : `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please type the M-Pesa phone number you will use to pay, then wait for an M-Pesa prompt or payment details from us. Your official ticket will be sent here once payment is confirmed.`) }), 600);
-    if (isHashPay) sendEasyHashPayCard(c, booking);
+    if (isHashPay) setTimeout(() => sendEasyHashPayCard(c, booking), 800);
     // if the customer is slow to send the M-Pesa number, follow up politely (2 min, then 5 min)
     clearFollow(c.id);
     const nm = clip(booking.pax.split(',')[0], 40);
@@ -956,11 +956,11 @@ io.on('connection', (s) => {
     const remind = (en, swt) => () => { if (awaiting()) pushMsg(c, { from: 'agent', auto: true, text: sw ? swt : en }); };
     followT[c.id] = [
       setTimeout(remind(
-        `Hello ${nm}, your booking ${ref} is still waiting for payment. Please type the M-Pesa phone number you will pay with and we will send the payment prompt right away. 🙏`,
-        `Habari ${nm}, uhifadhi wako ${ref} bado unasubiri malipo. Tafadhali andika nambari ya simu ya M-Pesa utakayotumia kulipa, nasi tutakutumia ombi la malipo mara moja. 🙏`), 120000),
+        isHashPay ? `Hello ${nm}, your booking ${ref} is still waiting for payment. Please enter your M-Pesa number in the HASHBACK payment card and tap Pay. 🙏` : `Hello ${nm}, your booking ${ref} is still waiting for payment. Please type the M-Pesa phone number you will pay with and we will send the payment prompt right away. 🙏`,
+        isHashPay ? `Habari ${nm}, uhifadhi wako ${ref} bado unasubiri malipo. Tafadhali weka nambari yako ya M-Pesa ndani ya kadi ya HASHBACK na ubonyeze Pay. 🙏` : `Habari ${nm}, uhifadhi wako ${ref} bado unasubiri malipo. Tafadhali andika nambari ya simu ya M-Pesa utakayotumia kulipa, nasi tutakutumia ombi la malipo mara moja. 🙏`), 120000),
       setTimeout(remind(
-        `Kindly type your M-Pesa number here to complete booking ${ref}. If you need any help, just reply and we will assist you.`,
-        `Tafadhali andika nambari yako ya M-Pesa hapa ili kukamilisha uhifadhi ${ref}. Ukihitaji msaada, jibu tu hapa nasi tutakusaidia.`), 300000)
+        isHashPay ? `Kindly enter your M-Pesa number in the HASHBACK payment card to complete booking ${ref}.` : `Kindly type your M-Pesa number here to complete booking ${ref}. If you need any help, just reply and we will assist you.`,
+        isHashPay ? `Tafadhali weka nambari yako ya M-Pesa ndani ya kadi ya HASHBACK ili kukamilisha uhifadhi ${ref}.` : `Tafadhali andika nambari yako ya M-Pesa hapa ili kukamilisha uhifadhi ${ref}. Ukihitaji msaada, jibu tu hapa nasi tutakusaidia.`), 300000)
     ];
   });
   s.on('msg', (text) => {
