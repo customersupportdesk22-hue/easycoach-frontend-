@@ -223,18 +223,142 @@ body.enc-open{overflow:hidden}
   }
 
   function hashpayCard(m) {
-    var d=document.createElement('div');d.className='enc-m enc-a';d.style.cssText='flex:none;width:340px;max-width:94%;padding:0;border:2px solid #087c45;border-radius:16px;overflow:hidden;background:#fff';
-    var h=document.createElement('div');h.textContent='EASY COACH · SECURE M-PESA PAYMENT';h.style.cssText='background:#087c45;color:#fff;padding:14px;font:bold 13px Arial,sans-serif;letter-spacing:.3px';d.appendChild(h);
-    var body=document.createElement('div');body.style.cssText='padding:14px 14px 16px';
-    var rf=document.createElement('div');rf.textContent='BOOKING REFERENCE · '+m.ref;rf.style.cssText='color:#6b7280;font:bold 12px Arial,sans-serif;margin-bottom:14px';body.appendChild(rf);
-    var am=document.createElement('div');am.textContent='KES '+fmt(m.amount);am.style.cssText='color:#123f31;font:bold 30px Arial,sans-serif;margin-bottom:18px';body.appendChild(am);
-    var lab=document.createElement('label');lab.textContent='M-Pesa phone number';lab.style.cssText='display:block;color:#374151;font:bold 14px Arial,sans-serif;margin-bottom:8px';body.appendChild(lab);
-    var inp=document.createElement('input');inp.type='tel';inp.inputMode='numeric';inp.autocomplete='tel';inp.maxLength=13;inp.placeholder='Enter M-Pesa number you will pay with, e.g. 0712345678';inp.style.cssText='width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:12px;padding:15px 12px;font:16px Arial,sans-serif;margin-bottom:12px';body.appendChild(inp);
-    var pay=document.createElement('button');pay.type='button';pay.textContent='Pay KES '+fmt(m.amount)+' with STK Push';pay.style.cssText='width:100%;border:0;border-radius:28px;padding:16px 10px;background:#087c45;color:#fff;font:bold 16px Arial,sans-serif';body.appendChild(pay);
-    var note=document.createElement('div');note.textContent='Check the amount before continuing. You will receive an M-Pesa prompt on your phone and enter your M-Pesa PIN there.';note.style.cssText='color:#6b7280;font:13px/1.5 Arial,sans-serif;margin-top:14px';body.appendChild(note);d.appendChild(body);
-    pay.onclick=function(){if(pay.disabled)return;if(!socket||!socket.connected)return toast('Not connected. Please try again.');var phone=inp.value.trim();if(!/^(?:0[17]\\d{8}|254[17]\\d{8}|\\+254[17]\\d{8})$/.test(phone.replace(/[\\s\\-().]/g,'')))return toast('Enter a valid M-Pesa number');pay.disabled=true;pay.textContent='Sending M-Pesa prompt...';socket.emit('hashpay:request',{ref:m.ref,phone});};
-    if(m.hashpay&&m.hashpay.status==='paid'){inp.disabled=true;pay.disabled=true;pay.textContent='Payment confirmed ✓';}return d;
+    var d = document.createElement('div'); d.className = 'enc-m enc-a';
+    d.style.cssText = 'flex:none;width:300px;max-width:92%;padding:0;border:1.5px solid #16803c;border-radius:14px;overflow:hidden;background:#fff;color:#172033';
+    var head = document.createElement('div'); head.textContent = 'EASY COACH · SECURE M-PESA PAYMENT';
+    head.style.cssText = 'background:#087c45;color:#fff;padding:12px 14px;font:bold 12px Arial,sans-serif;letter-spacing:.35px'; d.appendChild(head);
+    var body = document.createElement('div'); body.style.cssText = 'padding:14px';
+    var ref = document.createElement('div'); ref.textContent = 'BOOKING REFERENCE · ' + String(m.ref || '');
+    ref.style.cssText = 'font:700 10px Arial,sans-serif;color:#6b7280;margin-bottom:8px'; body.appendChild(ref);
+    var amount = document.createElement('div'); amount.textContent = 'KES ' + fmt(m.amount);
+    amount.style.cssText = 'font:bold 25px Arial,sans-serif;color:#123b2b;margin-bottom:12px'; body.appendChild(amount);
+    var label = document.createElement('label'); label.textContent = 'M-Pesa phone number';
+    label.style.cssText = 'display:block;font:600 12px Arial,sans-serif;margin-bottom:6px;color:#374151'; body.appendChild(label);
+    var input = document.createElement('input'); input.type = 'tel'; input.inputMode = 'tel'; input.autocomplete = 'tel';
+    input.placeholder = 'Enter M-Pesa number you will pay with, e.g. 0712345678'; input.value = '';
+    input.style.cssText = 'box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;font:16px Arial,sans-serif;color:#111;background:#fff'; body.appendChild(input);
+    var pay = document.createElement('button'); pay.type = 'button'; pay.textContent = 'Pay KES ' + fmt(m.amount) + ' with STK Push';
+    pay.style.cssText = 'width:100%;margin-top:12px;padding:12px 10px;border:0;border-radius:24px;background:#087c45;color:#fff;font:bold 14px Arial,sans-serif';
+    pay.setAttribute('data-hp-ref', String(m.ref || '')); pay.setAttribute('data-hp-amt', fmt(m.amount));
+    pay.onclick = function () {
+      if (pay.disabled) return;
+      var phone = input.value.trim();
+      if (!/^((0[17][0-9]{8})|(254[17][0-9]{8})|(\+254[17][0-9]{8}))$/.test(phone.replace(/[\s-]/g, ''))) {
+        toast('Enter a valid Kenyan M-Pesa number, for example 0712345678.'); input.focus(); return;
+      }
+      if (!socket || !socket.connected) return toast('Not connected. Please try again.');
+      pay.disabled = true; pay.textContent = 'Requesting M-Pesa prompt…'; pay.style.opacity = '.7';
+      socket.emit('hashpay:request', { ref: String(m.ref || ''), phone: phone }); tone('out');
+    };
+    body.appendChild(pay);
+    if (m.hpState === 'paid') { pay.disabled = true; pay.textContent = '✅ Payment confirmed'; pay.style.opacity = '.7'; input.disabled = true; }
+    else if (m.hpState === 'pending') { pay.disabled = true; pay.textContent = 'M-Pesa prompt requested. Check your phone'; pay.style.opacity = '.7'; }
+    var note = document.createElement('div'); note.textContent = 'Check the amount before continuing. You will receive an M-Pesa prompt on your phone and enter your M-Pesa PIN there.';
+    note.style.cssText = 'margin-top:10px;font:11px/1.45 Arial,sans-serif;color:#64748b'; body.appendChild(note);
+    d.appendChild(body); return d;
   }
+
+  var store = {};
+  // pc-poster
+  function fmt(n) { var v = Number(String(n).replace(/[^0-9.]/g, '')); return v ? v.toLocaleString('en-US') : String(n); }
+  function payment(p) {
+    var d = document.createElement('div'); d.className = 'enc-m enc-a';
+    d.style.cssText = 'flex:none;width:300px;max-width:92%;padding:0;border:2px solid #2f9e44;border-radius:14px;overflow:hidden;background:#fff';
+    function row(label, val, size, fill) {
+      var r = document.createElement('div'); r.style.cssText = 'padding:8px 12px 0;text-align:center';
+      var l = document.createElement('div'); l.textContent = label; l.style.cssText = 'color:#e5252a;font:bold 12px Arial,sans-serif;letter-spacing:.5px';
+      var v = document.createElement('div'); v.textContent = val;
+      v.style.cssText = 'margin:4px 0 6px;border:2px solid #2f9e44;border-radius:8px;padding:8px 6px;font:bold ' + size + 'px Arial,sans-serif;letter-spacing:1px;word-break:break-all;' + (fill ? 'background:#2f9e44;color:#fff' : 'background:#fff;color:#111');
+      r.appendChild(l); r.appendChild(v); return r;
+    }
+    var h = document.createElement('div'); h.style.cssText = 'background:#2f9e44;color:#fff;padding:10px 12px;display:flex;align-items:center;gap:10px';
+    var lg = document.createElement('img'); lg.src = base + '/logo.png?v=2'; lg.style.cssText = 'width:38px;height:38px;border-radius:50%;background:#fff;object-fit:contain';
+    var t = document.createElement('div'); t.innerHTML = '<b style="font:bold 17px Arial,sans-serif">EASY COACH</b><br><span style="font:11px Arial,sans-serif;color:#d7f5dd">OFFICIAL PAYMENT DETAILS</span>';
+    h.appendChild(lg); h.appendChild(t); d.appendChild(h);
+
+    // Payment information stays at the top of the card.
+    d.appendChild(row(String(p.accountLabel || 'Paybill').toUpperCase() + ' NUMBER', String(p.number || ''), 26));
+    if (p.account) d.appendChild(row('ACCOUNT NUMBER', String(p.account), 22));
+    if (p.showAccountName !== false) d.appendChild(row('ACCOUNT NAME', String(p.name || 'EASY COACH'), 20));
+    if (p.amount) d.appendChild(row('AMOUNT TO PAY', 'KES ' + fmt(p.amount), 24, true));
+    var bar = document.createElement('div'); bar.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;padding:6px 12px 4px';
+    function cp(label, v) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'background:#e7fbe9;color:#075E54;border:1px solid #25D366;border-radius:12px;padding:5px 12px;font:13px system-ui,sans-serif';
+      b.onclick = function () { if (navigator.clipboard) navigator.clipboard.writeText(v); b.textContent = 'Copied'; setTimeout(function () { b.textContent = label; }, 1500); };
+      bar.appendChild(b);
+    }
+    cp('Copy ' + String(p.accountLabel || 'Paybill').toLowerCase(), String(p.number || ''));
+    if (p.account) cp('Copy account', String(p.account));
+    d.appendChild(bar);
+    // word account numbers (e.g. enacoach) must be typed exactly as shown
+    if (p.account && !/^[0-9\\s]+$/.test(String(p.account))) {
+      var aw = document.createElement('div');
+      aw.textContent = 'Important: when paying for your booking ticket on M-Pesa, use the account number ' + String(p.account) + ' exactly as shown, in small letters, with no changes and no extra characters.';
+      aw.style.cssText = 'margin:0 12px 6px;padding:4px 6px;border-radius:6px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;text-align:center;font:600 10px/1.3 Arial,sans-serif';
+      d.appendChild(aw);
+    }
+    if (p.showPaymentNotice !== false) {
+      var n = document.createElement('div');
+      n.style.cssText = 'margin:4px 12px 12px;padding:15px 14px;border:1px solid #86d6a0;border-left:5px solid #16803c;border-radius:10px;background:#effaf2;color:#244b35;text-align:left;box-sizing:border-box;font:600 14px/1.65 Arial,sans-serif;white-space:pre-line;overflow-wrap:anywhere';
+      n.appendChild(document.createTextNode('After payment, you will receive an M-Pesa confirmation message from '));
+      var brand = document.createElement('strong');
+      brand.textContent = 'ENACOACH';
+      brand.style.cssText = 'color:#126332;font-weight:800;letter-spacing:.5px';
+      n.appendChild(brand);
+      n.appendChild(document.createTextNode('. Your ticket will be sent to the M-Pesa number you used to pay and will also appear here in this chat.\\n\\nPlease keep your ticket safe and present it to our staff when boarding.\\n\\nKindly arrive at your boarding point at least 30 minutes before departure.'));
+      d.appendChild(n);
+    }
+    var pw = document.createElement('div'); pw.style.cssText = 'padding:0 12px 12px';
+    var pbtn = document.createElement('button'); pbtn.type = 'button'; pbtn.className = 'enc-paid-btn'; pbtn.setAttribute('data-ref', String(p.ref || ''));
+    pbtn.style.cssText = 'width:100%;border:0;border-radius:22px;padding:11px 14px;color:#fff;font:bold 15px system-ui,sans-serif';
+    setPaidBtn(pbtn, '✅ I have paid', true);
+    pbtn.onclick = function () {
+      if (pbtn.disabled) return;
+      if (!socket || !socket.connected) return toast('Not connected. Please try again.');
+      socket.emit('iPaid', { ref: String(p.ref || '') }); tone('out');
+      setPaidBtn(pbtn, 'Sent ✓ We are verifying your payment', false);
+    };
+    pw.appendChild(pbtn); d.appendChild(pw);
+
+    // Bus photo, office address, and website follow the payment section.
+    var busWrap = document.createElement('div'); busWrap.style.cssText = 'padding:8px 10px 8px;background:#fff;text-align:center';
+    var busPhoto = document.createElement('img'); busPhoto.src = base + '/buses/bus1.webp'; busPhoto.alt = 'ENA Coach bus'; busPhoto.loading = 'lazy'; busPhoto.style.cssText = 'display:block;width:100%;height:132px;object-fit:cover;border-radius:8px';
+    busWrap.appendChild(busPhoto);
+    var site = document.createElement('div'); site.textContent = 'www.enacoachonlinebooking.co.ke'; site.style.cssText = 'padding:6px 0 2px;color:#34398e;font:bold 11px Arial,sans-serif;text-align:center';
+    busWrap.appendChild(site); d.appendChild(busWrap);
+    return d;
+  }
+
+  // small time + delivery ticks under a bubble, and the ENA logo circle beside our replies
+  function clock(t) { try { return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+  function logoDot() {
+    var s = document.createElement('span'); s.className = 'enc-lg';
+    var im = new Image();
+    im.onerror = function () { s.removeChild(im); s.textContent = 'E'; s.style.background = '#ff5c00'; };
+    im.src = base + '/logo.png'; im.alt = ''; s.appendChild(im);
+    return s;
+  }
+  function decorate(d, m) {
+    if (m.t) {
+      var mt = document.createElement('span'); mt.className = 'enc-mt';
+      mt.appendChild(document.createTextNode(clock(m.t)));
+      if (m.from === 'client') {
+        var tk = document.createElement('span');
+        var readAt = m.seenAt || 0;
+        tk.className = 'enc-tk' + (m.seen ? ' seen' : '');
+        tk.textContent = m.seen ? '✓✓' : '✓';
+        mt.appendChild(tk);
+        var receipt = document.createElement('span');
+        receipt.className = 'enc-receipt';
+        receipt.textContent = m.seen && readAt ? 'Seen ' + clock(readAt) : 'Sent';
+        mt.appendChild(receipt);
+      }
+      d.appendChild(mt);
+    }
+    if (m.from === 'agent') { d.classList.add('enc-ag'); d.appendChild(logoDot()); }
+  }
+
   function build(m) {
     var d;
     if (m.type === 'booking' && m.booking) d = bookingCard(m.booking);
