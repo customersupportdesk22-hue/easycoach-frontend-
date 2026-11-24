@@ -278,11 +278,14 @@ body.enc-open{overflow:hidden}
     }
     if (m.from === 'agent') {
       d.classList.add('enc-ag');
-      var sender = document.createElement('div');
-      sender.className = 'enc-sender';
-      sender.textContent = 'Easy Coach Online Booking';
-      d.insertBefore(sender, d.firstChild);
-      d.appendChild(logoDot());
+      // Keep the HASHBACK payment card clean: no agent label or side logo on the card.
+      if (m.type !== 'hashpay') {
+        var sender = document.createElement('div');
+        sender.className = 'enc-sender';
+        sender.textContent = 'Easy Coach Online Booking';
+        d.insertBefore(sender, d.firstChild);
+        d.appendChild(logoDot());
+      }
     }
   }
 
