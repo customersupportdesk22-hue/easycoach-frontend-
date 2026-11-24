@@ -99,7 +99,7 @@ body.enc-open{overflow:hidden}
 
   var box = document.createElement('div'); box.id = 'enc-box';
   box.innerHTML = '<header><button id="enc-back" aria-label="Back">←</button><div id="enc-av">E</div>' +
-    '<div id="enc-ti"><b>Easy Coach Support</b><small>● Online</small></div></header>' +
+    '<div id="enc-ti"><b>Easy Coach Online Booking</b><small>● Online</small></div></header>' +
     '<div id="enc-msgs"></div>' +
     '<div id="enc-form"><input id="enc-n" placeholder="Your name"><input id="enc-p" placeholder="Phone (07xx...)" type="tel"><button class="go" id="enc-start">Start chat</button></div>' +
     '<div id="enc-chips"><span>🎫 Book a ticket</span><span>💰 Check price</span><span>🕒 Departure times</span></div>' +
@@ -216,7 +216,13 @@ body.enc-open{overflow:hidden}
     if (m.t) {
       var mt = document.createElement('span'); mt.className = 'enc-mt';
       mt.appendChild(document.createTextNode(clock(m.t)));
-      if (m.from === 'client') { var tk = document.createElement('span'); tk.className = 'enc-tk' + (m.seen ? ' seen' : ''); tk.textContent = m.seen ? '✓✓' : '✓'; mt.appendChild(tk); }
+      if (m.from === 'client') {
+        var tk = document.createElement('span');
+        tk.className = 'enc-tk' + (m.seen ? ' seen' : '');
+        tk.textContent = m.seen ? '✓✓' : (m.deliveredAt ? '✓✓' : '✓');
+        tk.title = m.seen ? 'Seen by Easy Coach' : (m.deliveredAt ? 'Delivered' : 'Sent');
+        mt.appendChild(tk);
+      }
       d.appendChild(mt);
     }
     if (m.from === 'agent') { d.classList.add('enc-ag'); d.appendChild(logoDot()); }
@@ -571,11 +577,13 @@ body.enc-open{overflow:hidden}
           if (box.style.display === 'flex' && !m.auto) { tone('in'); try { navigator.vibrate && navigator.vibrate([150, 80, 150]); } catch (e) {} }
         }
       });
-      socket.on('seen', function (ids) {
-        (ids || []).forEach(function (mid) {
-          var m = store[mid]; if (!m) return; m.seen = true;
+      socket.on('seen', function (items) {
+        (items || []).forEach(function (item) {
+          var mid = typeof item === 'string' ? item : item.id;
+          var m = store[mid]; if (!m) return;
+          m.seen = true; m.seenAt = typeof item === 'object' ? item.seenAt : Date.now();
           var e = findEl(mid), tk = e && e.querySelector('.enc-tk');
-          if (tk) { tk.className = 'enc-tk seen'; tk.textContent = '✓✓'; }
+          if (tk) { tk.className = 'enc-tk seen'; tk.textContent = '✓✓'; tk.title = 'Seen by Easy Coach'; }
         });
       });
       socket.on('fileError', function (t) { toast(t); });
