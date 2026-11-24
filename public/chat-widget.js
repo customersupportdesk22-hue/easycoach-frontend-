@@ -147,11 +147,49 @@ body.enc-open{overflow:hidden}
 
   function bookingCard(b) {
     var d = document.createElement('div'); d.className = 'enc-m enc-b';
-    var r = [['Booking reference', b.ref], ['Passenger', b.pax], ['Route', b.from + ' → ' + b.to], ['Date', b.date], ['Time', b.time], ['Seat', b.seat], ['Amount', 'KES ' + b.amount]];
+    var names = String(b.pax || 'Passenger').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var seats = String(b.seat || '').split(/[,\\s]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var passengers = names.map(function (name, i) { return { name: name, seat: seats[i] || (seats.length === 1 ? seats[0] : '') }; });
     var paid = b.status === 'paid';
-    d.innerHTML = '<div class="bk"><h4>🎫 My booking</h4><table>' +
-      r.map(function (x) { return '<tr><td>' + x[0] + '</td><td><b>' + esc(x[1]) + '</b></td></tr>'; }).join('') +
-      '</table><div class="st' + (paid ? ' ok' : ' wait') + '">' + (paid ? '✅ Paid - ticket issued' : '<span class="hg">⏳</span> ' + (b.paidClaimed ? 'Verifying your payment' : 'Awaiting payment')) + '</div></div>';
+    var header = document.createElement('div');
+    header.style.cssText = 'background:#d71920;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;font:bold 14px Arial,sans-serif';
+    var brand = document.createElement('span'); brand.textContent = 'EASY COACH · BOOKING';
+    var tag = document.createElement('span'); tag.textContent = paid ? 'CONFIRMED' : 'AWAITING PAYMENT';
+    tag.style.cssText = 'background:#fff;color:' + (paid ? '#15803d' : '#b45309') + ';padding:5px 9px;border-radius:18px;font:bold 10px Arial,sans-serif;white-space:nowrap';
+    header.appendChild(brand); header.appendChild(tag);
+    var body = document.createElement('div'); body.style.cssText = 'padding:14px;background:#fff;color:#172033';
+    var logoRow = document.createElement('div'); logoRow.style.cssText = 'display:flex;align-items:center;gap:9px;margin-bottom:12px';
+    var logo = document.createElement('img'); logo.src = base + '/images/logo.webp'; logo.alt = 'Easy Coach'; logo.style.cssText = 'width:90px;height:38px;object-fit:contain;background:#fff';
+    var ref = document.createElement('div'); ref.style.cssText = 'font:700 10px Arial,sans-serif;color:#7b8191;overflow-wrap:anywhere'; ref.textContent = 'BOOKING REFERENCE · ' + String(b.ref || '');
+    logoRow.appendChild(logo); logoRow.appendChild(ref); body.appendChild(logoRow);
+    var route = document.createElement('div'); route.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;color:#b5121b;font:bold 20px Arial,sans-serif;margin:4px 0 14px';
+    var from = document.createElement('span'); from.textContent = String(b.from || '').toUpperCase();
+    var arrow = document.createElement('span'); arrow.textContent = '→'; arrow.style.cssText = 'color:#d71920';
+    var to = document.createElement('span'); to.textContent = String(b.to || '').toUpperCase();
+    route.appendChild(from); route.appendChild(arrow); route.appendChild(to); body.appendChild(route);
+    var meta = document.createElement('div'); meta.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px';
+    function field(label, value) {
+      var cell = document.createElement('div'); var small = document.createElement('div'); small.textContent = label; small.style.cssText = 'font:11px Arial,sans-serif;color:#7b8191;text-transform:uppercase;margin-bottom:3px';
+      var strong = document.createElement('b'); strong.textContent = value || '—'; strong.style.cssText = 'font:600 13px Arial,sans-serif;color:#172033;overflow-wrap:anywhere';
+      cell.appendChild(small); cell.appendChild(strong); meta.appendChild(cell);
+    }
+    field('Travel date', b.date); field('Departure', b.time); field('Contact', b.phone); field('Passengers', String(passengers.length));
+    body.appendChild(meta);
+    var passTitle = document.createElement('div'); passTitle.textContent = 'PASSENGER DETAILS'; passTitle.style.cssText = 'border-top:1px solid #e5e7eb;padding-top:11px;margin-bottom:8px;font:bold 11px Arial,sans-serif;color:#b5121b';
+    body.appendChild(passTitle);
+    passengers.forEach(function (p) {
+      var row = document.createElement('div'); row.style.cssText = 'display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0;font:600 13px Arial,sans-serif';
+      var pn = document.createElement('span'); pn.textContent = p.name;
+      var seat = document.createElement('span'); seat.textContent = p.seat ? 'Seat ' + p.seat : ''; seat.style.cssText = 'color:#64748b;font-weight:400';
+      row.appendChild(pn); row.appendChild(seat); body.appendChild(row);
+    });
+    var total = document.createElement('div'); total.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 0 4px;font:bold 15px Arial,sans-serif';
+    var totalLabel = document.createElement('span'); totalLabel.textContent = 'TOTAL FARE';
+    var totalAmount = document.createElement('strong'); totalAmount.textContent = 'KES ' + fmt(b.amount); totalAmount.style.cssText = 'font-size:22px;color:#b5121b';
+    total.appendChild(totalLabel); total.appendChild(totalAmount); body.appendChild(total);
+    var status = document.createElement('div'); status.style.cssText = 'padding:11px 12px;text-align:center;font:bold 13px Arial,sans-serif;background:' + (paid ? '#dcfce7' : '#fff7ed') + ';color:' + (paid ? '#166534' : '#b45309');
+    status.textContent = paid ? '✅ Payment confirmed · ticket issued' : (b.paidClaimed ? '⏳ Payment verification in progress' : '⏳ Waiting for payment');
+    d.appendChild(header); d.appendChild(body); d.appendChild(status);
     return d;
   }
   var store = {};
@@ -679,7 +717,7 @@ body.enc-open{overflow:hidden}
     try { if (b.phone && !localStorage.getItem('enc_ph')) localStorage.setItem('enc_ph', b.phone); } catch (e) {}
     afterClose = done || null;
     openChat();
-    $('enc-t').placeholder = 'Type the M-Pesa number you will pay with...';
+    $('enc-t').placeholder = 'Type a message...';
     outbox.push(function () { socket.emit('booking', b); });
     flushOut();
   }
