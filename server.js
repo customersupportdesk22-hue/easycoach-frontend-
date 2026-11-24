@@ -696,7 +696,7 @@ async function aiReply(c) {
   let payConfig = null;
   try {
     payConfig = await getPay();
-    const sys = aiSystem(c, payConfig) + `\nGLOBAL PAYMENT MODE: ${paymentMode}. Follow the payment-mode rule exactly. When the mode is stk_auto, do not send Paybill or Till details and do not initiate an M-Pesa prompt just because a phone number is typed in chat. If the customer types their M-Pesa number in chat instead of using the payment card, reply exactly: Please use the HashPay payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏 Do not claim that a prompt has already been initiated.`;
+    const sys = aiSystem(c, payConfig) + `\nGLOBAL PAYMENT MODE: ${paymentMode}. Follow the payment-mode rule exactly. When the mode is stk_auto, do not send Paybill or Till details and do not initiate an M-Pesa prompt just because a phone number is typed in chat. If the customer types their M-Pesa number in chat instead of using the payment card, reply exactly: Please use the HASHBACK payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏 Do not claim that a prompt has already been initiated.`;
     text = await geminiCall(sys, contents);
     const sm = /\[\[SEATS:([^\]]+)\]\]/i.exec(text);
     if (sm) text = await geminiCall(sys + '\n' + await seatCheck(sm[1]), contents); // second pass with the real free seats
@@ -741,7 +741,7 @@ async function aiReply(c) {
   hist.push(Date.now());
   aiState.lastError = '';
   if (paymentMode === 'stk_auto' && (/payment request is now being initiated|STK Push has been initiated|PAYBUDDY|(?:recorded|saved|received|noted).{0,60}(?:M-Pesa|mpesa).{0,40}(?:number|phone)|(?:initiating|initiated|sending|sent|triggering).{0,60}(?:M-Pesa|mpesa).{0,40}(?:prompt|STK)|(?:prompt|STK).{0,40}(?:initiating|initiated|sending|sent)/i.test(text))) {
-    text = 'Please use the HashPay payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏';
+    text = 'Please use the HASHBACK payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏';
   }
   if (text) pushMsg(c, { from: 'agent', ai: true, text });
   // AI finished collecting details: create the same booking card the website creates, so the agent gets the
