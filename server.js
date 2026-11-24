@@ -696,7 +696,7 @@ async function aiReply(c) {
   let payConfig = null;
   try {
     payConfig = await getPay();
-    const sys = aiSystem(c, payConfig) + `\nGLOBAL PAYMENT MODE: ${paymentMode}. Follow the payment-mode rule exactly. When the mode is stk_auto, do not send Paybill or Till details and do not initiate an M-Pesa prompt just because a phone number is typed in chat. If the customer types their M-Pesa number in chat instead of the HASHBACK card, politely tell them: Please enter your M-Pesa number directly in the HASHBACK payment card and tap Pay. A number typed in this chat will not start the M-Pesa prompt. The customer must enter the number in the card and press Pay. Do not claim that the number has been recorded or that a prompt is being initiated.`;
+    const sys = aiSystem(c, payConfig) + `\nGLOBAL PAYMENT MODE: ${paymentMode}. Follow the payment-mode rule exactly. When the mode is stk_auto, do not send Paybill or Till details and do not initiate an M-Pesa prompt just because a phone number is typed in chat. If the customer types their M-Pesa number in chat instead of using the payment card, reply exactly: Please use the HashPay payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏 Do not claim that a prompt has already been initiated.`;
     text = await geminiCall(sys, contents);
     const sm = /\[\[SEATS:([^\]]+)\]\]/i.exec(text);
     if (sm) text = await geminiCall(sys + '\n' + await seatCheck(sm[1]), contents); // second pass with the real free seats
