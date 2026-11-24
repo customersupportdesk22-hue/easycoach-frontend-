@@ -394,8 +394,8 @@ body.enc-open{overflow:hidden}
   function logoDot() {
     var s = document.createElement('span'); s.className = 'enc-lg';
     var im = new Image();
-    im.onerror = function () { s.removeChild(im); s.textContent = 'E'; s.style.background = '#ff5c00'; };
-    im.src = base + '/logo.png'; im.alt = ''; s.appendChild(im);
+    im.onerror = function () { im.onerror = null; im.src = '/images/logo.webp'; };
+    im.src = base + '/images/logo.webp'; im.alt = ''; s.appendChild(im);
     return s;
   }
   function decorate(d, m) {
@@ -404,18 +404,21 @@ body.enc-open{overflow:hidden}
       mt.appendChild(document.createTextNode(clock(m.t)));
       if (m.from === 'client') {
         var tk = document.createElement('span');
-        var readAt = m.seenAt || 0;
         tk.className = 'enc-tk' + (m.seen ? ' seen' : '');
-        tk.textContent = m.seen ? '✓✓' : '✓';
+        tk.textContent = m.seen ? '✓✓' : (m.deliveredAt ? '✓✓' : '✓');
+        tk.title = m.seen ? 'Seen by Easy Coach' : (m.deliveredAt ? 'Delivered' : 'Sent');
         mt.appendChild(tk);
-        var receipt = document.createElement('span');
-        receipt.className = 'enc-receipt';
-        receipt.textContent = m.seen && readAt ? 'Seen ' + clock(readAt) : 'Sent';
-        mt.appendChild(receipt);
       }
       d.appendChild(mt);
     }
-    if (m.from === 'agent') { d.classList.add('enc-ag'); d.appendChild(logoDot()); }
+    if (m.from === 'agent') {
+      d.classList.add('enc-ag');
+      var sender = document.createElement('div');
+      sender.className = 'enc-sender';
+      sender.textContent = 'Easy Coach Online Booking';
+      d.insertBefore(sender, d.firstChild);
+      d.appendChild(logoDot());
+    }
   }
 
   function build(m) {
@@ -649,9 +652,10 @@ body.enc-open{overflow:hidden}
         (items || []).forEach(function (item) {
           var mid = typeof item === 'string' ? item : item.id;
           var m = store[mid]; if (!m) return;
-          m.seen = true; m.seenAt = typeof item === 'object' ? item.seenAt : Date.now();
-          var e = findEl(mid), tk = e && e.querySelector('.enc-tk');
-          if (tk) { tk.className = 'enc-tk seen'; tk.textContent = '✓✓'; tk.title = 'Seen by Easy Coach'; }
+          m.seen = true;
+          m.seenAt = (typeof item === 'object' && item.seenAt) || Date.now();
+          var old = findEl(mid);
+          if (old) msgs.replaceChild(build(m), old);
         });
       });
       socket.on('fileError', function (t) { toast(t); });
