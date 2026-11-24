@@ -1059,14 +1059,39 @@ io.on('connection', (s) => {
 
 
   s.on('hashpay:request', async (data) => {
-    const c=chatSessions[s.data.id], ref=clip(data&&data.ref,24), phone=clip(data&&data.phone,24);
-    if(!c||!/^EASYCOACH-\d{6}$/.test(ref)) return s.emit('hashpay:result',{ref,success:false,message:'Your chat session expired. Please refresh and try again.'});
-    if(await getPaymentMode()!=='stk_auto') return s.emit('hashpay:result',{ref,success:false,message:'HASHBACK STK payment is not currently enabled.'});
-    const m=c.msgs.find(x=>x.type==='booking'&&x.booking&&x.booking.ref===ref), b=m&&m.booking;
-    if(!b||b.status==='paid') return s.emit('hashpay:result',{ref,success:false,message:'This booking is not available for payment.'});
-    if(!easyHashPayPhone(phone)) return s.emit('hashpay:result',{ref,success:false,message:'Enter a valid Kenyan M-Pesa number and try again.'});
-    const ok=await initiateEasyHashPay(c,b,phone);
-    s.emit('hashpay:result',{ref,success:!!ok,message:ok?'M-Pesa prompt request accepted.':'We could not send the prompt. Please check the number and try again.'});
+    const c = chatSessions[s.data.id];
+    const ref = clip(data && data.ref, 24);
+    const phone = clip(data && data.phone, 24);
+    if (!c || !/^EASYCOACH-\d{6}$/.test(ref)) {
+      s.emit('hashpay:result', { ref: ref || 'unknown', success: false, message: 'Your chat session expired. Please refresh the page and try again.' });
+      return;
+    }
+    if (await getPaymentMode() !== 'stk_auto') {
+      s.emit('hashpay:result', { ref, success: false, message: 'Automatic STK Push is not currently enabled.' });
+      return;
+    }
+    const msg = c.msgs.find((m) => m.type === 'booking' && m.booking && m.booking.ref === ref);
+    const booking = msg && msg.booking;
+    if (!booking || booking.status === 'paid' || booking.paidClaimed) {
+      s.emit('hashpay:result', { ref, success: false, message: 'This booking is not currently available for payment.' });
+      return;
+    }
+    if (booking.hashpay && ['initiating', 'initiated'].includes(booking.hashpay.status) &&
+        Date.now() - (booking.hashpay.initiatedAt || booking.hashpay.startedAt || 0) < HASHPAY_PROMPT_TTL + 30000) {
+      s.emit('hashpay:result', { ref, success: true, message: 'An M-Pesa prompt has already been requested for this booking.' });
+      return;
+    }
+    const amount = Number(String(booking.amount || '').replace(/[^\d]/g, '')) || 0;
+    if (amount < 1 || !easyHashPayPhone(phone)) {
+      s.emit('hashpay:result', { ref, success: false, message: 'Enter a valid Kenyan M-Pesa number and try again.' });
+      return;
+    }
+    humanAt[c.id] = Date.now();
+    aiHold[c.id] = true;
+    let ok = false;
+    try { ok = await initiateEasyHashPay(c, booking, phone); }
+    catch (e) { console.error('hashpay:request error:', e.message); }
+    s.emit('hashpay:result', { ref, success: !!ok, message: ok ? 'M-Pesa prompt request accepted.' : 'We could not send the prompt. Please check the number and try again.' });
   });
 
   // ---- customer pressed "Proceed to Payment": booking details arrive in the chat ----
