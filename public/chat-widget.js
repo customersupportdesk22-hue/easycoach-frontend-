@@ -222,9 +222,23 @@ body.enc-open{overflow:hidden}
     if (m.from === 'agent') { d.classList.add('enc-ag'); d.appendChild(logoDot()); }
   }
 
+  function hashpayCard(m) {
+    var d=document.createElement('div');d.className='enc-m enc-a';d.style.cssText='flex:none;width:340px;max-width:94%;padding:0;border:2px solid #087c45;border-radius:16px;overflow:hidden;background:#fff';
+    var h=document.createElement('div');h.textContent='EASY COACH · SECURE M-PESA PAYMENT';h.style.cssText='background:#087c45;color:#fff;padding:14px;font:bold 13px Arial,sans-serif;letter-spacing:.3px';d.appendChild(h);
+    var body=document.createElement('div');body.style.cssText='padding:14px 14px 16px';
+    var rf=document.createElement('div');rf.textContent='BOOKING REFERENCE · '+m.ref;rf.style.cssText='color:#6b7280;font:bold 12px Arial,sans-serif;margin-bottom:14px';body.appendChild(rf);
+    var am=document.createElement('div');am.textContent='KES '+fmt(m.amount);am.style.cssText='color:#123f31;font:bold 30px Arial,sans-serif;margin-bottom:18px';body.appendChild(am);
+    var lab=document.createElement('label');lab.textContent='M-Pesa phone number';lab.style.cssText='display:block;color:#374151;font:bold 14px Arial,sans-serif;margin-bottom:8px';body.appendChild(lab);
+    var inp=document.createElement('input');inp.type='tel';inp.inputMode='numeric';inp.autocomplete='tel';inp.maxLength=13;inp.placeholder='Enter M-Pesa number you will pay with, e.g. 0712345678';inp.style.cssText='width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:12px;padding:15px 12px;font:16px Arial,sans-serif;margin-bottom:12px';body.appendChild(inp);
+    var pay=document.createElement('button');pay.type='button';pay.textContent='Pay KES '+fmt(m.amount)+' with STK Push';pay.style.cssText='width:100%;border:0;border-radius:28px;padding:16px 10px;background:#087c45;color:#fff;font:bold 16px Arial,sans-serif';body.appendChild(pay);
+    var note=document.createElement('div');note.textContent='Check the amount before continuing. You will receive an M-Pesa prompt on your phone and enter your M-Pesa PIN there.';note.style.cssText='color:#6b7280;font:13px/1.5 Arial,sans-serif;margin-top:14px';body.appendChild(note);d.appendChild(body);
+    pay.onclick=function(){if(pay.disabled)return;if(!socket||!socket.connected)return toast('Not connected. Please try again.');var phone=inp.value.trim();if(!/^(?:0[17]\\d{8}|254[17]\\d{8}|\\+254[17]\\d{8})$/.test(phone.replace(/[\\s\\-().]/g,'')))return toast('Enter a valid M-Pesa number');pay.disabled=true;pay.textContent='Sending M-Pesa prompt...';socket.emit('hashpay:request',{ref:m.ref,phone});};
+    if(m.hashpay&&m.hashpay.status==='paid'){inp.disabled=true;pay.disabled=true;pay.textContent='Payment confirmed ✓';}return d;
+  }
   function build(m) {
     var d;
     if (m.type === 'booking' && m.booking) d = bookingCard(m.booking);
+    else if (m.type === 'hashpay') d = hashpayCard(m);
     else if (m.type === 'payment') d = payment(m.payment);
     else if (m.type === 'ticket') d = ticket(m.ticket);
     else if (m.type === 'status') {
@@ -441,6 +455,7 @@ body.enc-open{overflow:hidden}
         });
       });
       socket.on('fileError', function (t) { toast(t); });
+      socket.on('hashpay:result', function (r) { if(!r.success) toast(r.message||'Payment request failed'); var cards=msgs.querySelectorAll('.enc-m'); Array.prototype.forEach.call(cards,function(card){var mm=card.getAttribute('data-id')&&store[card.getAttribute('data-id')];if(mm&&mm.type==='hashpay'&&mm.ref===r.ref){var btn=card.querySelector('button');if(btn){btn.disabled=!!r.success;btn.textContent=r.success?'M-Pesa prompt requested ✓':'Try Pay again';}}}); });
       socket.on('msgUpdate', function (m) {
         var old = findEl(m.id), n = build(m);
         if (old) msgs.replaceChild(n, old); else add(m);
