@@ -190,7 +190,13 @@ body.enc-open{overflow:hidden}
     var totalAmount = document.createElement('strong'); totalAmount.textContent = 'KES ' + fmt(b.amount); totalAmount.style.cssText = 'font-size:22px;color:#b5121b';
     total.appendChild(totalLabel); total.appendChild(totalAmount); body.appendChild(total);
     var status = document.createElement('div'); status.style.cssText = 'padding:11px 12px;text-align:center;font:bold 13px Arial,sans-serif;background:' + (paid ? '#dcfce7' : '#fff7ed') + ';color:' + (paid ? '#166534' : '#b45309');
-    status.textContent = paid ? '✅ Payment confirmed · ticket issued' : (b.paidClaimed ? '⏳ Payment verification in progress' : '⏳ Waiting for payment');
+    if (paid) { status.textContent = '✅ Payment confirmed · ticket issued'; }
+    else {
+      var hourglass = document.createElement('span'); hourglass.className = 'enc-wait-spin'; hourglass.textContent = '⏳';
+      hourglass.style.cssText = 'display:inline-block;margin-right:5px;transform-origin:50% 50%;animation:encWaitSpin 1.4s linear infinite';
+      if (!document.getElementById('enc-wait-spin-css')) { var spinStyle = document.createElement('style'); spinStyle.id = 'enc-wait-spin-css'; spinStyle.textContent = '@keyframes encWaitSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}'; document.head.appendChild(spinStyle); }
+      status.appendChild(hourglass); status.appendChild(document.createTextNode(b.paidClaimed ? 'Payment verification in progress' : 'Waiting for payment'));
+    }
     d.appendChild(header); d.appendChild(body); d.appendChild(status);
     return d;
   }
