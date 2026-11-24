@@ -765,13 +765,13 @@ async function aiReply(c) {
       }
     }
   }
-  if (payNow && paymentMode !== 'automatic') {
+  if (payNow && paymentMode !== 'automatic' && paymentMode !== 'stk_auto') {
     aiHold[c.id] = true;
     const b = pendingBooking(c);
     chatTelegram(`💳 PAYMENT ACTION REQUIRED (${paymentMode === 'stk' ? 'MANUAL STK PUSH' : 'ADMIN PAYMENT DETAILS'})\n${c.name} (${c.phone})\nBooking: ${b ? b.ref : 'Not yet assigned'}\nAmount: KES ${b ? b.amount : ((payM && payM[1]) || 'To confirm')}\nPlease take action in Agent Chat: ${AGENT_URL}`);
   }
   if (handoff) aiHold[c.id] = true;
-  if (handoff && !(payNow && paymentMode !== 'automatic')) chatTelegram(`🙋 Customer waiting for YOUR reply (told to please wait)\n${c.name} (${c.phone}):\n"${clip(last.text, 200)}"\n\nReply: ${AGENT_URL}`);
+  if (handoff && !(payNow && paymentMode !== 'automatic' && paymentMode !== 'stk_auto')) chatTelegram(`🙋 Customer waiting for YOUR reply (told to please wait)\n${c.name} (${c.phone}):\n"${clip(last.text, 200)}"\n\nReply: ${AGENT_URL}`);
 }
 
 function aiSchedule(c, ms) {
