@@ -740,7 +740,7 @@ async function aiReply(c) {
   }
   hist.push(Date.now());
   aiState.lastError = '';
-  if (paymentMode === 'stk_auto' && /payment request is now being initiated|STK Push has been initiated|PAYBUDDY/i.test(text)) {
+  if (paymentMode === 'stk_auto' && (/payment request is now being initiated|STK Push has been initiated|PAYBUDDY|(?:recorded|saved|received|noted).{0,60}(?:M-Pesa|mpesa).{0,40}(?:number|phone)|(?:initiating|initiated|sending|sent|triggering).{0,60}(?:M-Pesa|mpesa).{0,40}(?:prompt|STK)|(?:prompt|STK).{0,40}(?:initiating|initiated|sending|sent)/i.test(text))) {
     text = 'Please use the HashPay payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏';
   }
   if (text) pushMsg(c, { from: 'agent', ai: true, text });
