@@ -268,6 +268,10 @@ body.enc-open{overflow:hidden}
         tk.textContent = m.seen ? '✓✓' : (m.deliveredAt ? '✓✓' : '✓');
         tk.title = m.seen ? 'Seen by Easy Coach' : (m.deliveredAt ? 'Delivered' : 'Sent');
         mt.appendChild(tk);
+        var receipt = document.createElement('span');
+        receipt.className = 'enc-receipt';
+        receipt.textContent = m.seen && m.seenAt ? 'Seen ' + clock(m.seenAt) : (m.deliveredAt ? 'Delivered ' + clock(m.deliveredAt) : 'Sent');
+        mt.appendChild(receipt);
       }
       d.appendChild(mt);
     }
@@ -387,38 +391,6 @@ body.enc-open{overflow:hidden}
     var site = document.createElement('div'); site.textContent = 'www.enacoachonlinebooking.co.ke'; site.style.cssText = 'padding:6px 0 2px;color:#34398e;font:bold 11px Arial,sans-serif;text-align:center';
     busWrap.appendChild(site); d.appendChild(busWrap);
     return d;
-  }
-
-  // small time + delivery ticks under a bubble, and the ENA logo circle beside our replies
-  function clock(t) { try { return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
-  function logoDot() {
-    var s = document.createElement('span'); s.className = 'enc-lg';
-    var im = new Image();
-    im.onerror = function () { im.onerror = null; im.src = '/images/logo.webp'; };
-    im.src = base + '/images/logo.webp'; im.alt = ''; s.appendChild(im);
-    return s;
-  }
-  function decorate(d, m) {
-    if (m.t) {
-      var mt = document.createElement('span'); mt.className = 'enc-mt';
-      mt.appendChild(document.createTextNode(clock(m.t)));
-      if (m.from === 'client') {
-        var tk = document.createElement('span');
-        tk.className = 'enc-tk' + (m.seen ? ' seen' : '');
-        tk.textContent = m.seen ? '✓✓' : (m.deliveredAt ? '✓✓' : '✓');
-        tk.title = m.seen ? 'Seen by Easy Coach' : (m.deliveredAt ? 'Delivered' : 'Sent');
-        mt.appendChild(tk);
-      }
-      d.appendChild(mt);
-    }
-    if (m.from === 'agent') {
-      d.classList.add('enc-ag');
-      var sender = document.createElement('div');
-      sender.className = 'enc-sender';
-      sender.textContent = 'Easy Coach Online Booking';
-      d.insertBefore(sender, d.firstChild);
-      d.appendChild(logoDot());
-    }
   }
 
   function build(m) {
