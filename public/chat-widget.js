@@ -12,7 +12,8 @@
 #enc-box{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;background:#f0f2f5;display:none;flex-direction:column;overflow:hidden;z-index:99999;font-family:system-ui,sans-serif}
 #enc-box header{background:#d71920;color:#fff;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;display:flex;align-items:center;gap:10px}
 #enc-back{background:none;border:0;color:#fff;font-size:26px;line-height:1;padding:4px 8px;cursor:pointer}
-#enc-av{min-width:96px;height:38px;border-radius:8px;background:#d71920;display:flex;align-items:center;justify-content:center;font-weight:700}
+#enc-av{width:96px;min-width:96px;height:48px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:3px;box-sizing:border-box}
+#enc-av img{width:100%;height:100%;object-fit:contain}
 #enc-ti{display:flex;flex-direction:column;line-height:1.25}
 #enc-ti b{font-size:16px}
 #enc-ti small{font-size:12px;color:#b9f5d0}
@@ -98,7 +99,7 @@ body.enc-open{overflow:hidden}
   document.head.appendChild(css);
 
   var box = document.createElement('div'); box.id = 'enc-box';
-  box.innerHTML = '<header><button id="enc-back" aria-label="Back">←</button><div id="enc-av">E</div>' +
+  box.innerHTML = '<header><button id="enc-back" aria-label="Back">←</button><div id="enc-av"><img src="' + base + '/images/logo.webp" alt="Easy Coach"></div>' +
     '<div id="enc-ti"><b>Easy Coach Online Booking</b><small>● Online</small></div></header>' +
     '<div id="enc-msgs"></div>' +
     '<div id="enc-form"><input id="enc-n" placeholder="Your name"><input id="enc-p" placeholder="Phone (07xx...)" type="tel"><button class="go" id="enc-start">Start chat</button></div>' +
@@ -246,7 +247,7 @@ body.enc-open{overflow:hidden}
   function logoDot() {
     var s = document.createElement('span'); s.className = 'enc-lg';
     var im = new Image();
-    im.onerror = function () { s.removeChild(im); s.textContent = 'E'; s.style.background = '#ff5c00'; };
+    im.onerror = function () { im.onerror = null; im.src = '/images/logo.webp'; };
     im.src = base + '/images/logo.webp'; im.alt = ''; s.appendChild(im);
     return s;
   }
