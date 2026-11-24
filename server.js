@@ -936,10 +936,15 @@ io.on('connection', (s) => {
       text: `🎫 Booking ${ref}: ${booking.from} → ${booking.to}, ${booking.date} ${booking.time}, seat ${booking.seat}, KES ${booking.amount}` });
     chatTelegram(`💳 BOOKING CHAT - awaiting payment\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date} ${booking.time}\nSeat: ${booking.seat}\nAmount: KES ${booking.amount}\n\nReply: ${AGENT_URL}`);
     const sw = b.lang === 'sw';
+    const isHashPay = await getPaymentMode() === 'hashpay';
     setTimeout(() => pushMsg(c, { from: 'agent', auto: true, text: sw
-      ? `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali tuandikie nambari ya simu ya M-Pesa utakayotumia kulipa, kisha subiri ombi la M-Pesa au maelezo ya malipo kutoka kwetu. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`
-      : `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please type the M-Pesa phone number you will use to pay, then wait for an M-Pesa prompt or payment details from us. Your official ticket will be sent here once payment is confirmed.` }), 600);
-    if (await getPaymentMode() === 'hashpay') sendEasyHashPayCard(c, booking);
+      ? (isHashPay
+        ? `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali weka nambari ya M-Pesa utakayotumia kulipa ndani ya kadi ya HASHBACK hapa chini, kisha bonyeza Pay kupokea ombi la malipo. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`
+        : `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali tuandikie nambari ya simu ya M-Pesa utakayotumia kulipa, kisha subiri ombi la M-Pesa au maelezo ya malipo kutoka kwetu. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`)
+      : (isHashPay
+        ? `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please enter the M-Pesa number you will use to pay inside the HASHBACK payment card below, then tap Pay to receive the M-Pesa prompt. Your official ticket will be sent here once payment is confirmed.`
+        : `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please type the M-Pesa phone number you will use to pay, then wait for an M-Pesa prompt or payment details from us. Your official ticket will be sent here once payment is confirmed.`) }), 600);
+    if (isHashPay) sendEasyHashPayCard(c, booking);
     // if the customer is slow to send the M-Pesa number, follow up politely (2 min, then 5 min)
     clearFollow(c.id);
     const nm = clip(booking.pax.split(',')[0], 40);
