@@ -323,7 +323,8 @@
   body.kb-open { padding-bottom: 0 !important; }
   /* keep Proceed to Payment well clear of the bottom nav, and ignore nav taps while the keyboard closes */
   #screen-passenger { padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px)); }
-  #screen-passenger .btn-payment { margin-bottom: 28px; }
+  /* Position Proceed to Payment lower in the available space, without changing passenger fields. */
+  #screen-passenger .btn-payment { margin-top: 72px; margin-bottom: 28px; }
   body.nav-guard .bottom-nav { pointer-events: none; }
   input, select, textarea { -webkit-user-select: text; user-select: text; scroll-margin-top: 120px; scroll-margin-bottom: 120px; }
 </style>
