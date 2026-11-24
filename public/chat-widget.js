@@ -435,7 +435,22 @@ body.enc-open{overflow:hidden}
       } else { d.textContent = stxt; }
     }
     else if (m.type === 'image' && m.file) d = imageBubble(m);
-    else { d = document.createElement('div'); d.className = 'enc-m ' + (m.from === 'client' ? 'enc-c' : 'enc-a') + (m.unsent ? ' enc-un' : ''); d.textContent = m.text; }
+    else {
+      d = document.createElement('div');
+      d.className = 'enc-m ' + (m.from === 'client' ? 'enc-c' : 'enc-a') + (m.unsent ? ' enc-un' : '');
+      var messageText = String(m.text || '');
+      if (m.from === 'agent' && !m.unsent && /^Welcome .+! 👋 We have received your booking .+Please enter the M-Pesa number you will use to pay inside the HASHBACK payment card below, then tap Pay/.test(messageText)) {
+        var pieces = messageText.split(/(HASHBACK|Pay)/g);
+        pieces.forEach(function (piece) {
+          if (piece === 'HASHBACK' || piece === 'Pay') {
+            var mark = document.createElement('strong');
+            mark.textContent = piece;
+            mark.style.cssText = 'color:#dc2626;font-weight:900';
+            d.appendChild(mark);
+          } else d.appendChild(document.createTextNode(piece));
+        });
+      } else d.textContent = messageText;
+    }
     if (m.type !== 'booking' && m.type !== 'payment' && m.type !== 'ticket' && !m.unsent) decorate(d, m);
     if (m.id) { d.setAttribute('data-id', m.id); store[m.id] = m; }
     if (m.likes && m.likes.client) { d.classList.add('enc-liked'); var h = document.createElement('span'); h.className = 'enc-lk'; h.textContent = '\u2764\uFE0F'; d.appendChild(h); }
