@@ -226,6 +226,7 @@ function markSeen(c) {
     }
   });
   if (ids.length) io.to(c.id).emit('seen', ids);
+  return ids.length;
 }
 function pushMsg(c, m) {
   m.t = Date.now();
@@ -324,8 +325,8 @@ agents.on('connection', (s) => {
     if (!c) return;
     const hadUnread = !!c.unread;
     c.unread = 0;
-    markSeen(c);
-    if (hadUnread) { saveChat(c); agents.emit('update', c); }
+    const newlySeen = markSeen(c);
+    if (hadUnread || newlySeen) { saveChat(c); agents.emit('update', c); }
   });
 });
 
