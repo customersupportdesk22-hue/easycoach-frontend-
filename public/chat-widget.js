@@ -92,6 +92,7 @@ body.enc-open{overflow:hidden}
 .enc-img .enc-mt{padding:0 4px 2px}
 .enc-tk{margin-left:4px;letter-spacing:-2px;font-size:11px}
 .enc-tk.seen{color:#34b7f1}
+.enc-receipt{margin-left:4px;color:#667781;letter-spacing:0;font-size:10px}
 .enc-ag{margin-left:34px;max-width:calc(80% - 20px)}
 .enc-sender{display:block;margin:0 0 7px;color:#b5121b;font:700 11px system-ui,sans-serif;line-height:1.2}
 .enc-lg{position:absolute;left:-34px;bottom:0;width:26px;height:26px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;overflow:hidden;display:flex;align-items:center;justify-content:center;font:700 13px system-ui,sans-serif;color:#fff}
