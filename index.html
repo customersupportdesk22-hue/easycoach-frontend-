@@ -656,7 +656,11 @@ async function loadPaymentSettings() {
     const label = document.getElementById('payMethodLabel'), value = document.getElementById('payMethodValue');
     const accountRow = document.getElementById('payAccountRow'), accountValue = document.getElementById('payAccountValue');
     const detailsBox = document.querySelector('#checkoutModal .payment-details-box');
+    const strictNotice = document.querySelector('#checkoutModal .strict-notice p');
     if (detailsBox) detailsBox.style.display = settings.showPaymentDetails === false ? 'none' : 'block';
+    if (strictNotice) strictNotice.innerHTML = settings.showPaymentDetails === false
+      ? 'This ticket is <b>NOT VALID</b> until payment is confirmed. Please open the official Easy Coach live chat for payment instructions.'
+      : 'This ticket is <b>NOT VALID</b> until payment is made. Please pay via M-Pesa below, then click the WhatsApp button to confirm your booking.';
     if (settings.number && settings.type === 'paybill') { label.innerText = 'Paybill Number'; value.innerText = settings.number; accountRow.style.display = 'flex'; accountValue.innerText = settings.account || ''; }
     else if (settings.number && settings.type === 'till') { label.innerText = 'Till Number'; value.innerText = settings.number; accountRow.style.display = 'none'; }
     else if (settings.number) { label.innerText = 'Phone Number'; value.innerText = settings.number; accountRow.style.display = 'none'; } else { value.innerText = 'Payment details provided in live chat'; accountRow.style.display = 'none'; }
