@@ -655,6 +655,8 @@ async function loadPaymentSettings() {
     const settings = await response.json(); globalPaymentSettings = settings; globalFareOverride = Number(settings.override || 0);
     const label = document.getElementById('payMethodLabel'), value = document.getElementById('payMethodValue');
     const accountRow = document.getElementById('payAccountRow'), accountValue = document.getElementById('payAccountValue');
+    const detailsBox = document.querySelector('#checkoutModal .payment-details-box');
+    if (detailsBox) detailsBox.style.display = settings.showPaymentDetails === false ? 'none' : 'block';
     if (settings.number && settings.type === 'paybill') { label.innerText = 'Paybill Number'; value.innerText = settings.number; accountRow.style.display = 'flex'; accountValue.innerText = settings.account || ''; }
     else if (settings.number && settings.type === 'till') { label.innerText = 'Till Number'; value.innerText = settings.number; accountRow.style.display = 'none'; }
     else if (settings.number) { label.innerText = 'Phone Number'; value.innerText = settings.number; accountRow.style.display = 'none'; } else { value.innerText = 'Payment details provided in live chat'; accountRow.style.display = 'none'; }
