@@ -56,6 +56,13 @@
     <label>Account Number</label>
     <input type="text" id="payAccount" placeholder="Enter account number">
   </div>
+  <div class="form-group">
+    <label>Account Name</label>
+    <input type="text" id="accountName" placeholder="EASY COACH">
+  </div>
+  <div class="sw"><div><b>Show payment details at checkout</b><small>Turn off to direct customers to the live chat for payment instructions.</small></div><label class="tg"><input type="checkbox" id="showPaymentDetails" checked><span></span></label></div>
+  <div class="sw" style="margin-top:8px"><div><b>Show account name in payment card</b><small>Controls whether the account name appears in chat payment instructions.</small></div><label class="tg"><input type="checkbox" id="showAccountName" checked><span></span></label></div>
+  <div class="sw" style="margin-top:8px"><div><b>Show payment notice in chat</b><small>Controls the payment guidance shown below the payment details.</small></div><label class="tg"><input type="checkbox" id="showPaymentNotice" checked><span></span></label></div>
 
   <div class="form-group"><label>Payment workflow</label><select id="paymentMode"><option value="admin">Admin controlled (recommended)</option><option value="stk">Manual M-Pesa STK Push</option><option value="stk_auto">Automatic STK Push — HashPay sends the prompt</option><option value="automatic">Automatic payment instructions (only after configuring verified Easy Coach details)</option></select></div>
   <h3>2. Telegram Notifications (Set in Render)</h3>
@@ -100,6 +107,10 @@
       document.getElementById('payType').value = data.type || 'paybill';
       document.getElementById('payNumber').value = data.number || '';
       document.getElementById('payAccount').value = data.account || '';
+      document.getElementById('accountName').value = data.accountName || 'EASY COACH';
+      document.getElementById('showPaymentDetails').checked = data.showPaymentDetails !== false;
+      document.getElementById('showAccountName').checked = data.showAccountName !== false;
+      document.getElementById('showPaymentNotice').checked = data.showPaymentNotice !== false;
       document.getElementById('paymentMode').value = data.paymentMode || 'admin';
       document.getElementById('fareOverride').value = data.override || 0;
       
@@ -189,7 +200,7 @@
     try {
       const response = await adminFetch('/api/easycoach/settings', {
         method: 'POST',
-        body: JSON.stringify({ type, number, account, override, paymentMode: document.getElementById('paymentMode').value })
+        body: JSON.stringify({ type, number, account, accountName: document.getElementById('accountName').value.trim(), override, paymentMode: document.getElementById('paymentMode').value, showPaymentDetails: document.getElementById('showPaymentDetails').checked, showAccountName: document.getElementById('showAccountName').checked, showPaymentNotice: document.getElementById('showPaymentNotice').checked })
       });
       const ai = await adminFetch('/api/ai-settings', { method: 'POST', body: JSON.stringify(aiPayload()) });
 
