@@ -100,6 +100,7 @@ function render(){
     d.querySelector('small').textContent=c.phone;
     d.onclick=function(){cur=c.id;$('main').classList.add('open');$('title').textContent=(c.name||'Guest')+' · '+c.phone;show(true);sock.emit('read',cur)};
     l.appendChild(d)})}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&cur&&$('main').classList.contains('open')&&sock)sock.emit('read',cur)});
 var shown={id:null,n:0};
 function atBottom(m){return m.scrollHeight-m.scrollTop-m.clientHeight<80}
 function show(force){
@@ -138,7 +139,7 @@ function send(){var v=$('t').value.trim();if(v&&cur){sock.emit('reply',{id:cur,t
 var PK=['method','label','number','account','name'],DEF={};
 fetch('/api/easycoach/settings').then(function(r){return r.json()}).then(function(o){
   DEF={label:o.type==='till'?'Till':(o.type==='phone'?'Phone':'Paybill'),number:o.number||'',account:o.account||'',name:o.accountName||'EASY COACH',showAccountName:o.showAccountName!==false,showPaymentNotice:o.showPaymentNotice!==false};fillPay()}).catch(function(){});
-function fillPay(){PK.forEach(function(k){var v=localStorage.getItem('pay_'+k)||DEF[k];if(v)$('p_'+k).value=v})}
+function fillPay(){PK.forEach(function(k){var v=k==='name'?DEF.name:(localStorage.getItem('pay_'+k)||DEF[k]);if(v)$('p_'+k).value=v})}
 $('pay').onclick=function(){$('tf').style.display='none';var f=$('pf');f.style.display=f.style.display==='grid'?'none':'grid';fillPay()};
 $('pk').onclick=function(){
   if(!cur)return;var p={};['method','label','number','account','name','amount','note'].forEach(function(k){p[k]=$('p_'+k).value.trim()});
