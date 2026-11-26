@@ -900,11 +900,15 @@ async function validateAndShowPayment() {
 }
 // Easy Coach customer-support/payment integration will be connected to the Easy Coach backend.
 function openBookingChat(info) {
+  const afterChatClose = () => {
+    showScreen('trip-history');
+    renderTripHistory('pending', document.querySelector('.th-tab'));
+  };
   if (window.EasyCoachChat && typeof window.EasyCoachChat.openBooking === 'function') {
-    window.EasyCoachChat.openBooking(info); return;
+    window.EasyCoachChat.openBooking(info, afterChatClose); return;
   }
   if (window.ENAChat && typeof window.ENAChat.openBooking === 'function') {
-    window.ENAChat.openBooking(info); return;
+    window.ENAChat.openBooking(info, afterChatClose); return;
   }
   showAlert('Live booking chat is temporarily unavailable. Your booking has not been submitted. Please try again or contact support.', 'Chat unavailable', '⚠️');
 }
