@@ -618,6 +618,7 @@ body.enc-open{overflow:hidden}
       socket.on('msg', function (m) {
         if (m.id && store[m.id]) return; // already shown
         add(m); updateUI(); if (m.t > lastT) lastT = m.t;
+        if (m.type === 'ticket' || (m.type === 'status' && !/being initiated/i.test(m.text || ''))) stopSpin();
         if (m.type === 'ticket' && m.ticket) { try { window.dispatchEvent(new CustomEvent('easyCoachTicket', { detail: m.ticket })); } catch (e) {} }
         if (m.from === 'agent') {
           if (box.style.display === 'flex') setSeen(m.t);
