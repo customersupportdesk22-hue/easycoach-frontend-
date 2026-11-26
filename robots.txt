@@ -14,4 +14,4 @@ Disallow: /admin.html
 Disallow: /api/
 Disallow: /chatfile/
 
-Sitemap: https://enacoachonlinebooking.co.ke/sitemap.xml
+Sitemap: https://www.easycoachbooking.co.ke/sitemap.xml
