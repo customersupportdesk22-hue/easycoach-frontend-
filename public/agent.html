@@ -137,7 +137,7 @@ setInterval(function(){if(sock&&!sock.connected)sock.connect()},5000);
 function send(){var v=$('t').value.trim();if(v&&cur){sock.emit('reply',{id:cur,text:v});tone('out');$('t').value='';$('t').style.height='auto'}}
 var PK=['method','label','number','account','name'],DEF={};
 fetch('/api/easycoach/settings').then(function(r){return r.json()}).then(function(o){
-  DEF={label:o.type==='till'?'Till':'Paybill',number:o.number||'',account:o.account||''};fillPay()}).catch(function(){});
+  DEF={label:o.type==='till'?'Till':(o.type==='phone'?'Phone':'Paybill'),number:o.number||'',account:o.account||'',name:o.accountName||'EASY COACH',showAccountName:o.showAccountName!==false,showPaymentNotice:o.showPaymentNotice!==false};fillPay()}).catch(function(){});
 function fillPay(){PK.forEach(function(k){var v=localStorage.getItem('pay_'+k)||DEF[k];if(v)$('p_'+k).value=v})}
 $('pay').onclick=function(){$('tf').style.display='none';var f=$('pf');f.style.display=f.style.display==='grid'?'none':'grid';fillPay()};
 $('pk').onclick=function(){
@@ -145,6 +145,8 @@ $('pk').onclick=function(){
   if(!p.number||!p.amount)return alert('Enter the number and the amount');
   PK.forEach(function(k){localStorage.setItem('pay_'+k,p[k])});
   p.accountLabel=p.label;delete p.label;
+  p.showAccountName = DEF.showAccountName !== false;
+  p.showPaymentNotice = DEF.showPaymentNotice !== false;
   sock.emit('payment',{id:cur,p:p});tone('out');$('pf').style.display='none';$('p_amount').value='';$('p_note').value=''};
 $('clr').onclick=function(){if(!cur)return;if(confirm('Clear this chat from the customer\'s side? Their screen will go empty, but you keep the full record here.')){sock.emit('clearChat',{id:cur});tone('out')}};
 $('send').onclick=send;$('t').oninput=function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'};
