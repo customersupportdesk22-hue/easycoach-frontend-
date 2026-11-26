@@ -219,7 +219,7 @@
       "origin": "Nairobi",
       "stops": [],
       "destination": "Nakuru",
-      "fare_kes": 3000
+      "fare_kes": 1800
     },
     {
       "id": "INIT023",
@@ -686,7 +686,7 @@
         "Kisii"
       ],
       "destination": "Kehancha",
-      "fare_kes": 1800
+      "fare_kes": 1700
     },
     {
       "id": "INIT078",
