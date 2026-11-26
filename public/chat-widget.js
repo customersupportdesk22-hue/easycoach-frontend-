@@ -1,5 +1,6 @@
 (function () {
   if (window.EasyCoachChat || window.ENAChat) return;
+  var awaitingBooking = false;
   var base = document.currentScript.src.replace(/\/chat-widget\.js.*$/, '');
   var css = document.createElement('style');
   css.textContent = `
@@ -370,7 +371,7 @@ body.enc-open{overflow:hidden}
       n.style.cssText = 'margin:4px 12px 12px;padding:15px 14px;border:1px solid #86d6a0;border-left:5px solid #16803c;border-radius:10px;background:#effaf2;color:#244b35;text-align:left;box-sizing:border-box;font:600 14px/1.65 Arial,sans-serif;white-space:pre-line;overflow-wrap:anywhere';
       n.appendChild(document.createTextNode('After payment, you will receive an M-Pesa confirmation message from '));
       var brand = document.createElement('strong');
-      brand.textContent = 'ENACOACH';
+      brand.textContent = 'EASYCOACH';
       brand.style.cssText = 'color:#126332;font-weight:800;letter-spacing:.5px';
       n.appendChild(brand);
       n.appendChild(document.createTextNode('. Your ticket will be sent to the M-Pesa number you used to pay and will also appear here in this chat.\\n\\nPlease keep your ticket safe and present it to our staff when boarding.\\n\\nKindly arrive at your boarding point at least 30 minutes before departure.'));
@@ -390,9 +391,9 @@ body.enc-open{overflow:hidden}
 
     // Bus photo, office address, and website follow the payment section.
     var busWrap = document.createElement('div'); busWrap.style.cssText = 'padding:8px 10px 8px;background:#fff;text-align:center';
-    var busPhoto = document.createElement('img'); busPhoto.src = base + '/buses/bus1.webp'; busPhoto.alt = 'ENA Coach bus'; busPhoto.loading = 'lazy'; busPhoto.style.cssText = 'display:block;width:100%;height:132px;object-fit:cover;border-radius:8px';
+    var busPhoto = document.createElement('img'); busPhoto.src = base + '/buses/bus1.webp'; busPhoto.alt = 'Easy Coach bus'; busPhoto.loading = 'lazy'; busPhoto.style.cssText = 'display:block;width:100%;height:132px;object-fit:cover;border-radius:8px';
     busWrap.appendChild(busPhoto);
-    var site = document.createElement('div'); site.textContent = 'www.enacoachonlinebooking.co.ke'; site.style.cssText = 'padding:6px 0 2px;color:#34398e;font:bold 11px Arial,sans-serif;text-align:center';
+    var site = document.createElement('div'); site.textContent = 'www.easycoachbooking.co.ke'; site.style.cssText = 'padding:6px 0 2px;color:#34398e;font:bold 11px Arial,sans-serif;text-align:center';
     busWrap.appendChild(site); d.appendChild(busWrap);
     return d;
   }
@@ -606,7 +607,7 @@ body.enc-open{overflow:hidden}
         h.forEach(function (m) { if (m.from === 'client' && m.t < la) m.seen = true; });
         msgs.innerHTML = ''; store = {}; closeMenu(); h.forEach(add); updateUI();
         h.forEach(function (m) { if (m.t > lastT) lastT = m.t; });
-        if (!h.length) add({ from: 'agent', text: 'Welcome to Easy Coach. How may we assist you today? Kindly share your departure town, destination and travel date, and we will gladly arrange your booking.' });
+        if (!h.length && !awaitingBooking) add({ from: 'agent', text: 'Welcome to Easy Coach. How may we assist you today? Kindly share your departure town, destination and travel date, and we will gladly arrange your booking.' });
         if (box.style.display === 'flex') setSeen(lastT);
         else {
           // customer came back to the site: count agent messages sent while they were away
@@ -723,6 +724,7 @@ body.enc-open{overflow:hidden}
   setInterval(function () { if (socket && !socket.connected) socket.connect(); }, 5000);
   // called by the booking page when the customer presses "Proceed to Payment"
   function openBooking(b, done) {
+    awaitingBooking = true;
     try { if (b.pax && !localStorage.getItem('enc_n')) localStorage.setItem('enc_n', String(b.pax).split(',')[0].trim()); } catch (e) {}
     try { if (b.phone && !localStorage.getItem('enc_ph')) localStorage.setItem('enc_ph', b.phone); } catch (e) {}
     afterClose = done || null;
