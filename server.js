@@ -61,14 +61,18 @@ app.all('/api/easycoach/settings', async (req, res) => {
 
     if (req.method === 'GET') {
       const settings = await collection.findOne({ _id: 'global' });
-      return res.status(200).json(settings || { type: 'paybill', number: '', account: '', override: 0, paymentMode: 'admin' });
+      return res.status(200).json(Object.assign({ type: 'paybill', number: '', account: '', accountName: 'EASY COACH', override: 0, paymentMode: 'admin', showPaymentDetails: true, showAccountName: true, showPaymentNotice: true }, settings || {}));
     }
 
     if (req.method === 'POST') {
       if (req.get('x-admin-password') !== (process.env.AGENT_PASSWORD || 'change-me')) return res.status(401).json({ error: 'Wrong password' });
       const { type, number, account, override } = req.body;
       const paymentMode = ['automatic','admin','stk','stk_auto'].includes(req.body.paymentMode) ? req.body.paymentMode : 'admin';
-      await collection.updateOne({ _id: 'global' }, { $set: { type, number, account, override, paymentMode } }, { upsert: true });
+      const accountName = clip(req.body.accountName, 60).trim() || 'EASY COACH';
+      const showPaymentDetails = req.body.showPaymentDetails !== false;
+      const showAccountName = req.body.showAccountName !== false;
+      const showPaymentNotice = req.body.showPaymentNotice !== false;
+      await collection.updateOne({ _id: 'global' }, { $set: { type, number, account, accountName, override, paymentMode, showPaymentDetails, showAccountName, showPaymentNotice } }, { upsert: true });
       return res.status(200).json({ success: true });
     }
     
@@ -267,6 +271,8 @@ agents.on('connection', (s) => {
       accountLabel: clip(p.accountLabel, 20) || 'Paybill',
       number: clip(p.number, 30), account: clip(p.account, 40),
       name: clip(p.name, 60) || 'EASY COACH', amount: clip(p.amount, 12),
+      showAccountName: p.showAccountName !== false,
+      showPaymentNotice: p.showPaymentNotice !== false,
       note: clip(p.note, 200)
     };
     if (!payment.number || !payment.amount) return;
