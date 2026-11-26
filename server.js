@@ -536,11 +536,14 @@ function stripAgentTalk(t) {
 
 function aiSystem(c, pay) {
   pay = pay || {};
+  const greet = c.msgs.some((m) => m.from === 'agent' && !m.unsent)
+    ? 'The customer has already been greeted in this conversation. Do not greet them again; continue naturally. '
+    : 'This is your first reply in this conversation. Greet the customer once, briefly and professionally. ';
   const override = Number(pay.override) || 0;
   const b = pendingBooking(c);
   const state = b ? `Unpaid booking in this chat: ref ${b.ref}, ${b.from} to ${b.to}, ${b.date} ${b.time}, seat ${b.seat}, KES ${b.amount}, passenger ${b.pax}. This may be an OLD booking. If the customer is now arranging a different trip (different route, date, time, seats or number of passengers), treat it as a NEW booking: collect every detail and include the BOOKING RECORD marker with the new total. Use [[PAY]] without the booking marker only when the customer is paying for exactly this unpaid booking.` : 'There is no unpaid booking in this chat.';
   return `You are the Easy Coach booking agent, answering customers in the company's website live chat in Kenya. Today's date is ${new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Nairobi',day:'numeric',month:'short',year:'numeric'})}. You ARE the agent: you handle each customer yourself from the first question to payment, and you never hand them over to anyone else.
-If a customer sincerely asks whether you are a person or a bot, never claim to be human: say you are Easy Coach's virtual booking assistant and carry on helping.
+${greet}Never repeat a greeting after the first reply. If a customer sincerely asks whether you are a person or a bot, never claim to be human: say you are Easy Coach's virtual booking assistant and carry on helping.
 Style: VERY professional and courteous, like a senior customer service executive of a reputable coach company. Greet the customer by name the first time when you know it. Use complete, polite, grammatically correct sentences, never slang and never short forms such as pls or kk, and at most one emoji per message (only 🙏 or ✅, and only when natural). Keep replies to 1 to 3 short sentences, plain text only, no markdown. Reply in the customer's language (English or Kiswahili), always in polite standard language even when the customer writes slang or Sheng. When a booking is complete you may close with: Thank you for choosing Easy Coach. Answer what was asked straight away using the facts below, then ask for the next missing detail.
 
 What you do:
