@@ -290,6 +290,19 @@ body.enc-open{overflow:hidden}
     }
   }
 
+  // green Pay button label: M-PESA logo badge + wording (drop an official mpesa-logo.png in /public to replace the text badge)
+  function hpLabel(btn, amt, prov) {
+    btn.textContent = '';
+    var badge = document.createElement('span');
+    badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:6px;padding:3px 7px;flex:none';
+    // text badge drawn straight away (no image download), so the button never shifts or flickers when the card is shown or updated
+    var tx = document.createElement('b'); tx.textContent = 'M-PESA';
+    tx.style.cssText = 'font:900 12px Arial,sans-serif;color:#43b02a;letter-spacing:.3px;white-space:nowrap';
+    badge.appendChild(tx);
+    var tx2 = document.createElement('span'); tx2.textContent = 'Pay Now KES ' + amt + ' to Easy Coach via ' + (prov === 'paybuddy' ? 'PAYBUDDY' : 'HashBack');
+    tx2.style.cssText = 'text-align:left;line-height:1.25';
+    btn.appendChild(badge); btn.appendChild(tx2);
+  }
   function hashpayCard(m) {
     var d = document.createElement('div'); d.className = 'enc-m enc-a';
     d.style.cssText = 'flex:none;width:300px;max-width:92%;padding:0;border:1.5px solid #16803c;border-radius:14px;overflow:hidden;background:#fff;color:#172033';
@@ -297,35 +310,44 @@ body.enc-open{overflow:hidden}
     head.style.cssText = 'background:#087c45;color:#fff;padding:12px 14px;font:bold 12px Arial,sans-serif;letter-spacing:.35px'; d.appendChild(head);
     var body = document.createElement('div'); body.style.cssText = 'padding:14px';
     var ref = document.createElement('div'); ref.textContent = 'BOOKING REFERENCE · ' + String(m.ref || '');
-    ref.style.cssText = 'font:700 10px Arial,sans-serif;color:#6b7280;margin-bottom:8px'; body.appendChild(ref);
+    ref.style.cssText = 'font:700 10px Arial,sans-serif;color:#6b7280;margin-bottom:4px'; body.appendChild(ref);
+    if (m.trip) { var trip = document.createElement('div'); trip.textContent = String(m.trip); trip.style.cssText = 'font:600 13px Arial,sans-serif;color:#374151;margin-bottom:8px'; body.appendChild(trip); }
     var amount = document.createElement('div'); amount.textContent = 'KES ' + fmt(m.amount);
     amount.style.cssText = 'font:bold 25px Arial,sans-serif;color:#123b2b;margin-bottom:12px'; body.appendChild(amount);
     var label = document.createElement('label'); label.textContent = 'M-Pesa phone number';
     label.style.cssText = 'display:block;font:600 12px Arial,sans-serif;margin-bottom:6px;color:#374151'; body.appendChild(label);
     var input = document.createElement('input'); input.type = 'tel'; input.inputMode = 'tel'; input.autocomplete = 'tel';
-    input.placeholder = 'Enter M-Pesa number you will pay with, e.g. 0712345678'; input.value = '';
+    input.placeholder = 'Enter M-Pesa number you will pay with, e.g. 0712345678'; input.value = m.phone ? String(m.phone) : '';
     input.style.cssText = 'box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;font:16px Arial,sans-serif;color:#111;background:#fff'; body.appendChild(input);
-    var pay = document.createElement('button'); pay.type = 'button'; pay.textContent = 'Pay KES ' + fmt(m.amount) + ' with STK Push';
-    pay.style.cssText = 'width:100%;margin-top:12px;padding:12px 10px;border:0;border-radius:24px;background:#087c45;color:#fff;font:bold 14px Arial,sans-serif';
-    pay.setAttribute('data-hp-ref', String(m.ref || '')); pay.setAttribute('data-hp-amt', fmt(m.amount));
+    var prov = m.provider === 'paybuddy' ? 'paybuddy' : 'hashback';
+    var pay = document.createElement('button'); pay.type = 'button'; hpLabel(pay, fmt(m.amount), prov);
+    pay.style.cssText = 'width:100%;margin-top:12px;padding:11px 12px;border:0;border-radius:28px;background:#087c45;color:#fff;font:bold 14px Arial,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px';
+    if (!document.getElementById('enc-hp-style')) {
+      var st = document.createElement('style'); st.id = 'enc-hp-style';
+      st.textContent = '@keyframes enc-hp-pulse{0%{box-shadow:0 0 0 0 rgba(8,124,69,.65);transform:scale(1)}70%{box-shadow:0 0 0 14px rgba(8,124,69,0);transform:scale(1.04)}100%{box-shadow:0 0 0 0 rgba(8,124,69,0);transform:scale(1)}}.enc-hp-go{animation:enc-hp-pulse 1.3s ease-in-out infinite}@media (prefers-reduced-motion:reduce){.enc-hp-go{animation:none}}';
+      document.head.appendChild(st);
+    }
+    pay.setAttribute('data-hp-ref', String(m.ref || '')); pay.setAttribute('data-hp-amt', fmt(m.amount)); pay.setAttribute('data-hp-prov', prov);
     pay.onclick = function () {
       if (pay.disabled) return;
       var phone = input.value.trim();
       if (!/^((0[17][0-9]{8})|(254[17][0-9]{8})|(\+254[17][0-9]{8}))$/.test(phone.replace(/[\s-]/g, ''))) {
-        toast('Enter a valid Kenyan M-Pesa number, for example 0712345678.'); input.focus(); return;
+        toast('Enter a valid M-Pesa number, for example 0712345678.'); input.focus(); return;
       }
       if (!socket || !socket.connected) return toast('Not connected. Please try again.');
-      pay.disabled = true; pay.textContent = 'Requesting M-Pesa prompt…'; pay.style.opacity = '.7';
-      socket.emit('hashpay:request', { ref: String(m.ref || ''), phone: phone }); tone('out');
+      pay.disabled = true; pay.classList.remove('enc-hp-go'); pay.textContent = prov === 'paybuddy' ? 'Sending request…' : 'Requesting M-Pesa prompt…'; pay.style.opacity = '.7';
+      pay.setAttribute('data-hp-phone', phone.replace(/[\s-]/g, '')); socket.emit('hashpay:request', { ref: String(m.ref || ''), phone: phone }); tone('out');
     };
     body.appendChild(pay);
+    if (m.hpState !== 'paid' && m.hpState !== 'pending') pay.classList.add('enc-hp-go');
     if (m.hpState === 'paid') { pay.disabled = true; pay.textContent = '✅ Payment confirmed'; pay.style.opacity = '.7'; input.disabled = true; }
-    else if (m.hpState === 'pending') { pay.disabled = true; pay.textContent = 'M-Pesa prompt requested. Check your phone'; pay.style.opacity = '.7'; }
-    var note = document.createElement('div'); note.textContent = 'Check the amount before continuing. You will receive an M-Pesa prompt on your phone and enter your M-Pesa PIN there.';
+    else if (m.hpState === 'pending') { pay.disabled = true; pay.textContent = prov === 'paybuddy' ? 'Request received. Keep your phone nearby' : 'M-Pesa prompt requested. Check your phone'; pay.style.opacity = '.7'; }
+    var note = document.createElement('div'); note.textContent = 'Payments are processed securely by ' + (prov === 'paybuddy' ? 'PayBuddy' : 'HashBack') + '. Check your M-Pesa balance first, and never share your PIN with anyone.';
     note.style.cssText = 'margin-top:10px;font:11px/1.45 Arial,sans-serif;color:#64748b'; body.appendChild(note);
     d.appendChild(body); return d;
   }
 
+  function stopSpin() {} // (ENA shows a spinner while waiting; Easy Coach has none)
   var store = {};
   // pc-poster
   function fmt(n) { var v = Number(String(n).replace(/[^0-9.]/g, '')); return v ? v.toLocaleString('en-US') : String(n); }
@@ -418,7 +440,12 @@ body.enc-open{overflow:hidden}
         ttl.appendChild(spn); ttl.appendChild(document.createTextNode('M-PESA PAYMENT PROMPT SENT')); d.appendChild(ttl);
         var parts = stxt.replace(/^\S+\s*/, '').split('PAYBUDDY');
         parts.forEach(function (p, i) { if (i) { var bb = document.createElement('b'); bb.textContent = 'PAYBUDDY'; bb.style.cssText = 'background:#1B8A3E;color:#fff;padding:1px 6px;border-radius:4px'; d.appendChild(bb); } d.appendChild(document.createTextNode(p)); });
-      } else { d.textContent = stxt; }
+      } else {
+        d.textContent = stxt;
+        if (m.statusKind === 'pending') d.style.cssText = 'background:#EFF6FF;border:1px solid #93C5FD;border-left:5px solid #087CF0;color:#1E3A8A;font-weight:600;';
+        else if (m.statusKind === 'insufficient') d.style.cssText = 'background:#FFF7ED;border:1px solid #FDBA74;border-left:5px solid #D97706;color:#9A3412;font-weight:600;';
+        else if (m.statusKind === 'wrong-pin' || m.statusKind === 'failed' || m.statusKind === 'cancelled' || m.error) d.style.cssText = 'background:#FEF2F2;border:1px solid #FCA5A5;border-left:5px solid #DC2626;color:#7F1D1D;font-weight:600;';
+      }
     }
     else if (m.type === 'image' && m.file) d = imageBubble(m);
     else {
@@ -637,7 +664,17 @@ body.enc-open{overflow:hidden}
         });
       });
       socket.on('fileError', function (t) { toast(t); });
-      socket.on('hashpay:result', function (r) { if(!r.success) toast(r.message||'Payment request failed'); var cards=msgs.querySelectorAll('.enc-m'); Array.prototype.forEach.call(cards,function(card){var mm=card.getAttribute('data-id')&&store[card.getAttribute('data-id')];if(mm&&mm.type==='hashpay'&&mm.ref===r.ref){var btn=card.querySelector('button');if(btn){btn.disabled=!!r.success;btn.textContent=r.success?'M-Pesa prompt requested ✓':'Try Pay again';}}}); });
+      socket.on('hashpay:result', function (r) {
+        if (!r || !r.ref) return;
+        if (!r.success) stopSpin();
+        var cards = msgs.querySelectorAll('button[data-hp-ref]');
+        Array.prototype.forEach.call(cards, function (b) {
+          if (b.getAttribute('data-hp-ref') !== String(r.ref)) return;
+          if (r.success && r.manual) { b.classList.remove('enc-hp-go'); b.textContent = 'Request received. Keep your phone nearby'; b.disabled = true; }
+          else if (r.success) { b.classList.remove('enc-hp-go'); var up = b.getAttribute('data-hp-phone') || ''; if (/^\+?254/.test(up)) up = '0' + up.replace(/^\+?254/, ''); b.textContent = 'M-Pesa prompt sent' + (up ? ' to ' + up.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3') : '') + '. Enter your PIN'; b.disabled = true; }
+          else { b.disabled = false; b.classList.add('enc-hp-go'); hpLabel(b, b.getAttribute('data-hp-amt') || '', b.getAttribute('data-hp-prov') || ''); b.style.opacity = '1'; if (r.message) toast(r.message); }
+        });
+      });
       socket.on('msgUpdate', function (m) {
         var old = findEl(m.id), n = build(m);
         if (old) msgs.replaceChild(n, old); else add(m);
