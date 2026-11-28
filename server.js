@@ -159,7 +159,7 @@ const { randomBytes } = require('crypto');
     chatCol = c.db(DB_NAME).collection('chats');
     chatFileCol = c.db(DB_NAME).collection('chatFiles');
     (await chatCol.find().toArray()).forEach((d) => {
-      chatSessions[d._id] = { id: d._id, name: d.name, phone: d.phone, msgs: d.msgs || [], unread: d.unread || 0, last: d.last || 0 };
+      chatSessions[d._id] = { id: d._id, name: d.name, phone: d.phone, msgs: d.msgs || [], unread: d.unread || 0, last: d.last || 0, payOverride: ['hashback','paybuddy'].includes(d.payOverride) ? d.payOverride : '' };
       ensureIds(chatSessions[d._id]);
     });
     console.log('Chat history loaded');
@@ -171,13 +171,23 @@ const { randomBytes } = require('crypto');
 function saveChat(c) {
   if (!chatCol) return;
   chatCol.updateOne({ _id: c.id },
-    { $set: { name: c.name, phone: c.phone, msgs: c.msgs, unread: c.unread, last: c.last } },
+    { $set: { name: c.name, phone: c.phone, msgs: c.msgs, unread: c.unread, last: c.last, payOverride: c.payOverride || '' } },
     { upsert: true }).catch(console.error);
 }
 const clip = (v, n) => String(v || '').slice(0, n);
 const newId = () => 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const ensureIds = (c) => c.msgs.forEach((m) => { if (!m.id) m.id = newId(); });
-const clientView = (c) => c.msgs.filter((m) => !m.hiddenForClient);
+const hpView = (c, m) => {
+  if (m.type !== 'hashpay') return m;
+  const bm = c.msgs.find((x) => x.type === 'booking' && x.booking && x.booking.ref === m.ref);
+  const h = bm && bm.booking && bm.booking.hashpay;
+  const paid = !!(bm && bm.booking && bm.booking.status === 'paid');
+  const mr = bm && bm.booking && bm.booking.manualReq;
+  const pending = !!(h && ['initiating', 'initiated'].includes(h.status) && Date.now() - (h.initiatedAt || h.startedAt || 0) < HASHPAY_PROMPT_TTL + 30000)
+    || !!(mr && Date.now() - (mr.at || 0) < MANUAL_REQ_TTL);
+  return Object.assign({}, m, { hpState: paid ? 'paid' : pending ? 'pending' : 'idle' });
+};
+const clientView = (c) => c.msgs.filter((m) => !m.hiddenForClient).map((m) => hpView(c, m));
 
 // ---- customer photo / screenshot storage ----
 async function putFile(id, type, buf) {
@@ -244,6 +254,21 @@ function pushMsg(c, m) {
 }
 agents.on('connection', (s) => {
   s.emit('sessions', Object.values(chatSessions));
+  s.emit('duty', { on: dutyOn });
+  s.on('setDuty', async (p) => {
+    dutyOn = !!(p && p.on);
+    try { const cl = await clientPromise; await cl.db(DB_NAME).collection('settings').updateOne({ _id: 'duty' }, { $set: { on: dutyOn, at: Date.now() } }, { upsert: true }); } catch (e) { console.error('Duty save failed:', e.message); }
+    agents.emit('duty', { on: dutyOn });
+    if (dutyOn) Object.values(chatSessions).forEach(syncPayCard);
+  });
+  s.on('setPayMode', ({ id, mode }) => {
+    const c = chatSessions[id];
+    if (!c) return;
+    c.payOverride = ['hashback', 'paybuddy'].includes(mode) ? mode : '';
+    saveChat(c);
+    agents.emit('update', c);
+    syncPayCard(c);
+  });
   s.on('reply', ({ id, text }) => {
     const c = chatSessions[id];
     if (!c || !text) return;
@@ -370,6 +395,37 @@ async function getPay() {
 async function getPaymentMode() {
   try { const c = await clientPromise; const s = await c.db(DB_NAME).collection('settings').findOne({ _id: 'global' }); return ['automatic','admin','stk','stk_auto'].includes(s && s.paymentMode) ? s.paymentMode : 'admin'; }
   catch (e) { return 'admin'; }
+}
+
+// ---- On duty switch + per-customer payment choice ----
+// While the agent is ON DUTY, each customer's own choice (HashBack = automatic, PayBuddy = manual) applies.
+// While ON DUTY the global payment mode is ignored completely: a customer with no choice made is handled manually by the agent ('admin' mode, no automatic card or STK).
+// Only when OFF DUTY does the global payment mode apply, exactly as before.
+let dutyOn = false;
+(async () => {
+  try { const c = await clientPromise; const d = await c.db(DB_NAME).collection('settings').findOne({ _id: 'duty' }); dutyOn = !!(d && d.on); }
+  catch (e) { console.error('Duty load failed:', e.message); }
+})();
+async function getEffectiveMode(c) {
+  if (dutyOn && c && c.payOverride === 'hashback') return 'stk_auto';
+  if (dutyOn && c && c.payOverride === 'paybuddy') return 'stk';
+  if (dutyOn) return 'admin'; // on duty: global payment mode must not work
+  return getPaymentMode();
+}
+const cardProvider = (mode) => (mode === 'stk' ? 'paybuddy' : 'hashback');
+// after the agent changes a customer's choice: update the card the customer already has (or send it) so the switch shows at once
+function syncPayCard(c) {
+  if (!dutyOn || !c || !c.payOverride) return;
+  const pb = pendingBooking(c);
+  if (!pb) return;
+  const card = c.msgs.slice().reverse().find((m) => m.type === 'hashpay' && m.ref === pb.ref && !m.hiddenForClient);
+  if (!card) { sendEasyHashPayCard(c, pb, c.payOverride); return; }
+  if (card.provider === c.payOverride || (!card.provider && c.payOverride === 'hashback')) return;
+  const h = pb.hashpay;
+  if (h && ['initiating', 'initiated'].includes(h.status) && Date.now() - (h.initiatedAt || h.startedAt || 0) < HASHPAY_PROMPT_TTL + 30000) return; // a prompt is in flight: do not change the card underneath it
+  card.provider = c.payOverride;
+  io.to(c.id).emit('msgUpdate', hpView(c, card));
+  saveChat(c);
 }
 
 function aiFail(msg, who) {
@@ -684,7 +740,7 @@ function normPhone(v) {
 }
 
 async function aiReply(c) {
-  if (!aiCfg.enabled || aiHold[c.id]) return;
+  if (!aiCfg.enabled || aiHold[c.id] || dutyOn) return; // on duty: the AI stays silent, the agent replies
   if (Date.now() - (humanAt[c.id] || 0) < (aiCfg.pauseMinutes || 10) * 60000) return;
   const now = Date.now();
   const hist = (aiCount[c.id] = (aiCount[c.id] || []).filter((t) => now - t < 3600000));
@@ -701,11 +757,13 @@ async function aiReply(c) {
   const contents = aiContents(c);
   if (!contents.length) return;
   let text;
-  const paymentMode = await getPaymentMode();
+  const paymentMode = await getEffectiveMode(c);
+  const cardMode = paymentMode === 'stk_auto' || paymentMode === 'stk';
   let payConfig = null;
   try {
     payConfig = await getPay();
-    const sys = aiSystem(c, payConfig) + `\nGLOBAL PAYMENT MODE: ${paymentMode}. Follow the payment-mode rule exactly. When the mode is stk_auto, do not send Paybill or Till details and do not initiate an M-Pesa prompt just because a phone number is typed in chat. If the customer types their M-Pesa number in chat instead of using the payment card, reply exactly: Please use the HASHBACK payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏 Do not claim that a prompt has already been initiated.`;
+    const sys = aiSystem(c, payConfig) + `\nGLOBAL PAYMENT MODE: ${paymentMode}. Follow the payment-mode rule exactly. When the mode is stk_auto, do not send Paybill or Till details and do not initiate an M-Pesa prompt just because a phone number is typed in chat. If the customer types their M-Pesa number in chat instead of using the payment card, reply exactly: Please use the HASHBACK payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏 Do not claim that a prompt has already been initiated.`
+      + (paymentMode === 'stk' ? `\nIMPORTANT for stk (PayBuddy manual): the customer pays with the in-chat PayBuddy payment card. Do NOT say a prompt was sent or is being initiated, do NOT send Paybill or Till details and do NOT use [[HOLD]] for payment. Tell the customer to confirm their M-Pesa number on the card and tap Pay. As soon as route, date, time, passengers, passenger names, seats and phone are all known, your reply MUST contain the [[BOOK:...]] marker (every field filled) together with [[PAY:TOTAL]]. The system then creates the booking and sends the card automatically.` : '');
     text = await geminiCall(sys, contents);
     const sm = /\[\[SEATS:([^\]]+)\]\]/i.exec(text);
     if (sm) text = await geminiCall(sys + '\n' + await seatCheck(sm[1]), contents); // second pass with the real free seats
@@ -713,7 +771,7 @@ async function aiReply(c) {
   catch (e) { return aiFail(e.message, c.name || c.phone); }
   // a human replied, or the customer wrote again, while the AI was thinking: stay quiet
   const nl = c.msgs[c.msgs.length - 1];
-  if (!nl || nl.id !== last.id || !aiCfg.enabled || Date.now() - (humanAt[c.id] || 0) < (aiCfg.pauseMinutes || 10) * 60000) return;
+  if (!nl || nl.id !== last.id || !aiCfg.enabled || dutyOn || Date.now() - (humanAt[c.id] || 0) < (aiCfg.pauseMinutes || 10) * 60000) return;
   const payM = /\[\[PAY(?::\s*(\d+))?\]\]/i.exec(text), wantPay = !!payM, handoff = /\[\[(HOLD|HANDOFF)\]\]/i.test(text);
   text = text.replace(/\[\[SEATS:[^\]]*\]\]/gi, '');
   const bookM = /\[\[BOOK:([^\]]+)\]\]/i.exec(text);
@@ -747,8 +805,16 @@ async function aiReply(c) {
         : 'Your booking ' + pb.ref + ' is still waiting for payment' + (amtTxt ? ' of ' + amtTxt : '') + '. Kindly use the payment details above, then tap "I have paid".';
     }
   }
+  if (newBook && cardMode) {
+    if (!preRef) preRef = newBookingRef(c);
+    const swAi = /\b(tafadhali|asante|malipo|karibu|nambari|safari|tarehe|kwenda)\b/i.test(text);
+    text = hbWelcome({ pax: bfAll[4], phone: bfAll[5], payPhone: bfAll[5] }, preRef, swAi);
+  }
   hist.push(Date.now());
   aiState.lastError = '';
+  if (paymentMode === 'stk' && /payment request is now being initiated|STK Push has been initiated/i.test(text)) {
+    text = 'Please use the payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone shortly after you tap Pay. 🙏';
+  }
   if (paymentMode === 'stk_auto' && (/payment request is now being initiated|STK Push has been initiated|PAYBUDDY|(?:recorded|saved|received|noted).{0,60}(?:M-Pesa|mpesa).{0,40}(?:number|phone)|(?:initiating|initiated|sending|sent|triggering).{0,60}(?:M-Pesa|mpesa).{0,40}(?:prompt|STK)|(?:prompt|STK).{0,40}(?:initiating|initiated|sending|sent)/i.test(text))) {
     text = 'Please use the HASHBACK payment card above: confirm your M-Pesa number, then tap Pay. The M-Pesa prompt will be sent to your phone only after you tap Pay. 🙏';
   }
@@ -769,8 +835,10 @@ async function aiReply(c) {
       pushMsg(c, { from: 'client', type: 'booking', booking,
         text: `🎫 Booking ${ref}: ${booking.from} → ${booking.to}, ${booking.date}, KES ${booking.amount} (made by AI assistant)` });
       chatTelegram(`💳 AI BOOKING - awaiting payment${/^0[17]\d{8}$/.test(booking.phone) ? '' : '\n⚠️ PHONE NUMBER LOOKS INVALID - confirm with customer'}\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date}\nAmount: KES ${booking.amount}\n\nReply: ${AGENT_URL}`);
+      if (cardMode) sendEasyHashPayCard(c, booking, cardProvider(paymentMode));
     }
   }
+  if (paymentMode === 'stk' && payNow && !newBook) { const pbS = pendingBooking(c); if (pbS) sendEasyHashPayCard(c, pbS, 'paybuddy'); }
   if (wantPay && paymentMode === 'automatic') {
     const b = pendingBooking(c);
     const amt = b ? b.amount : (payM[1] || '');
@@ -789,17 +857,17 @@ async function aiReply(c) {
       }
     }
   }
-  if (payNow && paymentMode !== 'automatic' && paymentMode !== 'stk_auto') {
+  if (payNow && paymentMode === 'admin') {
     aiHold[c.id] = true;
     const b = pendingBooking(c);
     chatTelegram(`💳 PAYMENT ACTION REQUIRED (${paymentMode === 'stk' ? 'MANUAL STK PUSH' : 'ADMIN PAYMENT DETAILS'})\n${c.name} (${c.phone})\nBooking: ${b ? b.ref : 'Not yet assigned'}\nAmount: KES ${b ? b.amount : ((payM && payM[1]) || 'To confirm')}\nPlease take action in Agent Chat: ${AGENT_URL}`);
   }
   if (handoff) aiHold[c.id] = true;
-  if (handoff && !(payNow && paymentMode !== 'automatic' && paymentMode !== 'stk_auto')) chatTelegram(`🙋 Customer waiting for YOUR reply (told to please wait)\n${c.name} (${c.phone}):\n"${clip(last.text, 200)}"\n\nReply: ${AGENT_URL}`);
+  if (handoff && !(payNow && paymentMode !== 'automatic')) chatTelegram(`🙋 Customer waiting for YOUR reply (told to please wait)\n${c.name} (${c.phone}):\n"${clip(last.text, 200)}"\n\nReply: ${AGENT_URL}`);
 }
 
 function aiSchedule(c, ms) {
-  if (!aiCfg.enabled) return;
+  if (!aiCfg.enabled || dutyOn) return;
   clearTimeout(aiTimers[c.id]);
   aiTimers[c.id] = setTimeout(() => { aiReply(c).catch((e) => aiFail(e.message)); }, ms || 2500); // wait for the customer to finish typing (a phone number is answered almost at once)
 }
@@ -854,11 +922,22 @@ function easyHashPayPhone(phone) {
   return '';
 }
 
-function sendEasyHashPayCard(c, booking) {
+// the M-Pesa number the customer typed on the website (or gave the AI): used to pre-fill the payment card
+function hpPhone(booking) {
+  const a = normPhone(booking && booking.payPhone), b = normPhone(booking && booking.phone);
+  return /^0[17]\d{8}$/.test(a) ? a : (/^0[17]\d{8}$/.test(b) ? b : '');
+}
+function hbWelcome(booking, ref, sw) {
+  const nm = clip(String(booking.pax || '').split(',')[0].replace(/\(.*?\)/g, '').trim(), 40);
+  const ph = hpPhone(booking);
+  if (sw) return `Asante, ${nm}. Uhifadhi wako ${ref} uko tayari. ` + (ph ? `Hakikisha ${ph} ndiyo nambari yako ya M-Pesa, kisha bonyeza kitufe kijani cha Pay kwenye kadi iliyo hapa chini.` : 'Weka nambari yako ya M-Pesa kwenye kadi iliyo hapa chini, kisha bonyeza Pay.');
+  return `Thank you, ${nm}. Your booking ${ref} is ready. ` + (ph ? `Please check that ${ph} is your M-Pesa number, then tap the green Pay button on the card below.` : 'Please enter your M-Pesa number in the card below, then tap Pay.');
+}
+function sendEasyHashPayCard(c, booking, provider) {
   if (!c || !booking || booking.status === 'paid') return;
   const amount = Number(String(booking.amount || '').replace(/[^\d]/g, '')) || 0;
   if (amount < 1 || c.msgs.some((m) => m.type === 'hashpay' && m.ref === booking.ref && !m.hiddenForClient)) return;
-  pushMsg(c, { from: 'agent', type: 'hashpay', ref: booking.ref, amount });
+  pushMsg(c, { from: 'agent', type: 'hashpay', provider: provider === 'paybuddy' ? 'paybuddy' : 'hashback', ref: booking.ref, amount, phone: hpPhone(booking), trip: (booking.from && booking.to) ? clip(booking.from + ' → ' + booking.to, 80) : '' });
 }
 
 async function initiateEasyHashPay(c, booking, phone) {
@@ -936,31 +1015,44 @@ function issueBookingTickets(c, m) {
   return true;
 }
 
+const MANUAL_REQ_TTL = 120000; // ms a manual (PayBuddy) request shows as pending before the customer may tap Pay again
 const HASHPAY_PROMPT_TTL = 120000; // ms to wait for a webhook before treating the prompt as failed
 
-function hashPayReasonText(reason) {
+function hashPayReasonKind(reason) {
   const r = String(reason || '');
-  if (/cancel/i.test(r)) return 'it was cancelled';
-  if (/insufficient|balance|funds/i.test(r)) return 'there was insufficient M-Pesa balance';
-  if (/pin|wrong|invalid.*initiator/i.test(r)) return 'the M-Pesa PIN was incorrect';
-  if (/timeout|timed out|expire|no response/i.test(r)) return 'the prompt timed out';
+  if (/insufficient|low.*balance|balance.*low|not enough funds/i.test(r)) return 'insufficient';
+  if (/wrong.*pin|incorrect.*pin|invalid.*pin|pin.*incorrect|pin.*wrong/i.test(r)) return 'wrong-pin';
+  if (/cancel/i.test(r)) return 'cancelled';
+  if (/timeout|timed out|expire|no response/i.test(r)) return 'pending';
+  return 'failed';
+}
+function hashPayReasonText(reason) {
+  const kind = hashPayReasonKind(reason);
+  if (kind === 'insufficient') return 'there were insufficient M-Pesa funds';
+  if (kind === 'wrong-pin') return 'the M-Pesa PIN entered was incorrect';
+  if (kind === 'cancelled') return 'the payment was cancelled';
+  if (kind === 'pending') return 'the payment prompt expired without confirmation';
   return '';
 }
-
-// Mark a booking's STK request as failed, tell the customer in the chat, reset their Pay button and alert staff.
 function failEasyHashPay(c, booking, reason, isTimeout) {
   if (!c || !booking || booking.status === 'paid') return false;
   const h = booking.hashpay;
   if (!h || !['initiating', 'initiated'].includes(h.status)) return false; // already handled (duplicate webhook / timer)
+  const kind = isTimeout ? 'pending' : hashPayReasonKind(reason);
   booking.hashpay = Object.assign({}, h, { status: 'failed', failedAt: Date.now(), failReason: clip(reason || (isTimeout ? 'timeout' : 'failed'), 160) });
   saveChat(c);
   let text;
-  if (isTimeout) text = 'We have not received your M-Pesa payment confirmation yet. If you did not get the prompt or did not complete it, tap Pay on the payment card to try again. If you already paid, please wait while Easy Coach verifies it. 🙏';
-  else {
+  if (kind === 'pending') {
+    text = 'We have not yet received confirmation of your M-Pesa payment. If the prompt is still on your phone, please complete it, or tap Pay to request a new one. If you have already paid, please wait while Easy Coach verifies it.';
+  } else if (kind === 'insufficient') {
+    text = 'Your M-Pesa payment was not completed because of insufficient funds. Please top up your M-Pesa account and try again. Your booking has not been confirmed yet.';
+  } else if (kind === 'wrong-pin') {
+    text = 'Your M-Pesa payment could not be completed because the PIN entered was incorrect. Please check your PIN and try again. Your booking has not been confirmed yet.';
+  } else {
     const why = hashPayReasonText(reason);
-    text = 'Your M-Pesa payment was not completed' + (why ? ' because ' + why : '') + '. Please tap Pay on the payment card to try again, or wait while Easy Coach assists you. 🙏';
+    text = 'Your M-Pesa payment was not completed' + (why ? ' because ' + why : '') + '. Please tap Pay on the payment card to try again, or wait while Easy Coach assists you.';
   }
-  pushMsg(c, { from: 'agent', type: 'status', error: true, text: '⚠️ ' + text });
+  pushMsg(c, { from: 'agent', type: 'status', statusKind: kind, error: kind !== 'pending', text: text });
   io.to(c.id).emit('hashpay:result', { ref: booking.ref, success: false, message: 'Payment not completed. Tap Pay to try again.' });
   chatTelegram('⚠️ HASHPAY PAYMENT ' + (isTimeout ? 'NO CONFIRMATION (TIMEOUT)' : 'FAILED / CANCELLED') + '\nBooking: ' + booking.ref + '\n' + c.name + ' (' + c.phone + ')\nReason: ' + clip(reason || (isTimeout ? 'no webhook received' : 'unknown'), 160));
   return true;
@@ -1090,7 +1182,11 @@ io.on('connection', (s) => {
       s.emit('hashpay:result', { ref: ref || 'unknown', success: false, message: 'Your chat session expired. Please refresh the page and try again.' });
       return;
     }
-    if (await getPaymentMode() !== 'stk_auto') {
+    // the card the customer is looking at decides the route: PayBuddy card = manual (agent sends the prompt), HashBack card = automatic
+    const effMode = await getEffectiveMode(c);
+    const cardMsg = c.msgs.slice().reverse().find((m) => m.type === 'hashpay' && m.ref === ref && !m.hiddenForClient);
+    const provider = cardMsg && cardMsg.provider ? cardMsg.provider : cardProvider(effMode);
+    if (provider !== 'paybuddy' && effMode !== 'stk_auto') {
       s.emit('hashpay:result', { ref, success: false, message: 'Automatic STK Push is not currently enabled.' });
       return;
     }
@@ -1098,6 +1194,30 @@ io.on('connection', (s) => {
     const booking = msg && msg.booking;
     if (!booking || booking.status === 'paid' || booking.paidClaimed) {
       s.emit('hashpay:result', { ref, success: false, message: 'This booking is not currently available for payment.' });
+      return;
+    }
+    if (provider === 'paybuddy') {
+      // ---- PayBuddy (manual): tell the agent, the agent sends the M-Pesa prompt from PayBuddy ----
+      const amt = Number(String(booking.amount || '').replace(/[^\d]/g, '')) || 0;
+      if (amt < 1 || !easyHashPayPhone(phone)) {
+        s.emit('hashpay:result', { ref, success: false, message: 'Enter a valid M-Pesa number and try again.' });
+        return;
+      }
+      const local = '0' + easyHashPayPhone(phone).slice(3);
+      const MSG = 'M-Pesa prompt sent through PAYBUDDY to ' + local + '. Check your phone and reply with your M-Pesa PIN.\n\nThank you for choosing EASY COACH.';
+      const prev = booking.manualReq;
+      if (prev && prev.phone === local && Date.now() - (prev.at || 0) < MANUAL_REQ_TTL) {
+        s.emit('hashpay:result', { ref, success: true, manual: true, message: MSG });
+        return;
+      }
+      booking.manualReq = { phone: local, at: Date.now() };
+      humanAt[c.id] = Date.now(); aiHold[c.id] = true;
+      saveChat(c);
+      pushMsg(c, { from: 'agent', type: 'status', statusKind: 'pending', text: MSG });
+      agents.emit('update', c);
+      agents.emit('paybuddyRequest', { id: c.id, ref: booking.ref, name: booking.pax ? String(booking.pax).split(',')[0].replace(/\(.*?\)/g, '').trim() : c.name, phone: local, amount: amt });
+      chatTelegram('💳 PAYBUDDY - CUSTOMER TAPPED PAY\nSend the M-Pesa prompt from PayBuddy now.\n' + (String(booking.pax || c.name || '').replace(/\(.*?\)/g, '').trim()) + '\nM-Pesa number: ' + local + '\nAmount: KES ' + amt + '\nBooking: ' + booking.ref + '\n\nReply: ' + AGENT_URL);
+      s.emit('hashpay:result', { ref, success: true, manual: true, message: MSG });
       return;
     }
     if (booking.hashpay && ['initiating', 'initiated'].includes(booking.hashpay.status) &&
@@ -1124,7 +1244,11 @@ io.on('connection', (s) => {
     if (!c || !b) return;
     const ref = clip(b.ref, 20);
     if (!/^EASYCOACH-\d{6}$/.test(ref)) return;
-    if (c.msgs.some((m) => m.type === 'booking' && m.booking && m.booking.ref === ref)) return; // already in chat
+    const existingBookingMsg = c.msgs.find((m) => m.type === 'booking' && m.booking && m.booking.ref === ref);
+    if (existingBookingMsg) { // already in chat: just make sure the right payment card is there
+      { const em = await getEffectiveMode(c); if (em === 'stk_auto' || em === 'stk') sendEasyHashPayCard(c, existingBookingMsg.booking, cardProvider(em)); }
+      return;
+    }
     const now = Date.now();
     s.data.bt = (s.data.bt || []).filter((t) => now - t < 60000);
     if (s.data.bt.length >= 5) return;
@@ -1134,7 +1258,9 @@ io.on('connection', (s) => {
     if (c.msgs.some((m) => m.type === 'booking' && m.booking && m.booking.ref === ref)) return; // re-check after await
     const booking = {
       ref, from: clip(b.from, 40), to: clip(b.to, 40), date: clip(b.date, 30), time: clip(b.time, 12),
-      seat: clip(b.seat, 120), pax: clip(b.pax, 400), phone: clip(b.phone, 20), amount: clip(b.amount, 12), status: 'pending'
+      seat: clip(b.seat, 120), pax: clip(b.pax, 400),
+      passengers: Array.isArray(b.passengers) ? b.passengers.slice(0, 6).map((p) => ({ name: clip(p && p.name, 100), seat: clip(p && p.seat, 20) })) : [],
+      phone: clip(b.phone, 20), payPhone: normPhone(b.payPhone), amount: clip(b.amount, 12), status: 'pending'
     };
     // the server decides the price: route fare + VIP/Business extra for every seat
     const exp = expectedTotal(booking.from, booking.to, booking.seat, Number(payCfg.override) || 0);
@@ -1143,15 +1269,14 @@ io.on('connection', (s) => {
       text: `🎫 Booking ${ref}: ${booking.from} → ${booking.to}, ${booking.date} ${booking.time}, seat ${booking.seat}, KES ${booking.amount}` });
     chatTelegram(`💳 BOOKING CHAT - awaiting payment\n${booking.pax} (${booking.phone})\nRef: ${ref}\n${booking.from} → ${booking.to}\n${booking.date} ${booking.time}\nSeat: ${booking.seat}\nAmount: KES ${booking.amount}\n\nReply: ${AGENT_URL}`);
     const sw = b.lang === 'sw';
-    const isHashPay = await getPaymentMode() === 'stk_auto';
-    setTimeout(() => pushMsg(c, { from: 'agent', auto: true, text: sw
-      ? (isHashPay
-        ? `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali weka nambari ya M-Pesa utakayotumia kulipa ndani ya kadi ya HASHBACK hapa chini, kisha bonyeza Pay kupokea ombi la malipo. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`
-        : `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali tuandikie nambari ya simu ya M-Pesa utakayotumia kulipa, kisha subiri ombi la M-Pesa au maelezo ya malipo kutoka kwetu. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`)
-      : (isHashPay
-        ? `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please enter the M-Pesa number you will use to pay inside the HASHBACK payment card below, then tap Pay to receive the M-Pesa prompt. Your official ticket will be sent here once payment is confirmed.`
-        : `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please type the M-Pesa phone number you will use to pay, then wait for an M-Pesa prompt or payment details from us. Your official ticket will be sent here once payment is confirmed.`) }), 600);
-    if (isHashPay) setTimeout(() => sendEasyHashPayCard(c, booking), 800);
+    const paymentMode = await getEffectiveMode(c);
+    const isHashPay = paymentMode === 'stk_auto' || paymentMode === 'stk'; // a payment card is sent (HashBack automatic, or PayBuddy manual)
+    setTimeout(() => {
+      if (!isHashPay) pushMsg(c, { from: 'agent', auto: true, text: sw
+        ? `Karibu ${clip(booking.pax.split(',')[0], 40)}! 👋 Tumepokea uhifadhi wako ${ref}. Tafadhali tuandikie nambari ya simu ya M-Pesa utakayotumia kulipa, kisha subiri ombi la M-Pesa au maelezo ya malipo kutoka kwetu. Tiketi yako rasmi itatumwa hapa baada ya malipo kuthibitishwa.`
+        : `Welcome ${clip(booking.pax.split(',')[0], 40)}! 👋 We have received your booking ${ref}. Please type the M-Pesa phone number you will use to pay, then wait for an M-Pesa prompt or payment details from us. Your official ticket will be sent here once payment is confirmed.` });
+      if (isHashPay) sendEasyHashPayCard(c, booking, cardProvider(paymentMode)); // card only, no greeting message
+    }, 600);
     // if the customer is slow to send the M-Pesa number, follow up politely (2 min, then 5 min)
     clearFollow(c.id);
     const nm = clip(booking.pax.split(',')[0], 40);
