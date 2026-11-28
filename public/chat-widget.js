@@ -347,7 +347,7 @@ body.enc-open{overflow:hidden}
     d.appendChild(body); return d;
   }
 
-  function stopSpin() {} // (ENA shows a spinner while waiting; Easy Coach has none)
+  function stopSpin() { Array.prototype.forEach.call(msgs.querySelectorAll('.enc-hp-spin'), function (e) { e.parentNode.removeChild(e); }); }
   var store = {};
   // pc-poster
   function fmt(n) { var v = Number(String(n).replace(/[^0-9.]/g, '')); return v ? v.toLocaleString('en-US') : String(n); }
@@ -429,7 +429,16 @@ body.enc-open{overflow:hidden}
     else if (m.type === 'status') {
       d = document.createElement('div'); d.className = 'enc-m enc-a';
       var stxt = String(m.text || 'Payment update');
-      if (stxt.indexOf('PAYBUDDY') > -1) {
+      if (/payment request is now being initiated/i.test(stxt)) {
+        if (!document.getElementById('enc-spin-css')) { var sty0 = document.createElement('style'); sty0.id = 'enc-spin-css'; sty0.textContent = '@keyframes encSpin{to{transform:rotate(360deg)}}'; document.head.appendChild(sty0); }
+        d.style.display = 'flex'; d.style.alignItems = 'flex-start';
+        if (m.t && Date.now() - m.t < 125000) { // only spin while the prompt is still pending
+          var sp = document.createElement('span'); sp.className = 'enc-hp-spin';
+          sp.style.cssText = 'display:inline-block;width:16px;height:16px;flex:none;margin:3px 10px 0 0;border:3px solid #BBF7D0;border-top-color:#087c45;border-radius:50%;animation:encSpin .9s linear infinite';
+          d.appendChild(sp);
+        }
+        var tx = document.createElement('span'); tx.textContent = stxt; d.appendChild(tx);
+      } else if (stxt.indexOf('PAYBUDDY') > -1) {
         d.style.cssText = 'background:#E8F5E9;border:1px solid #2E9E4F;border-left:5px solid #1B8A3E;color:#14532D;';
         var lrow = document.createElement('div'); lrow.style.cssText = 'margin-bottom:6px';
         var lgo = document.createElement('img'); lgo.src = base + '/images/logo.webp'; lgo.alt = 'Easy Coach'; lgo.style.cssText = 'height:30px;width:auto;max-width:120px;border-radius:6px;background:#fff;padding:2px 6px;object-fit:contain;border:1px solid #BBF7D0'; lgo.onerror = function () { lrow.style.display = 'none'; };
@@ -499,7 +508,9 @@ body.enc-open{overflow:hidden}
     });
   }
   function updateUI() {
-    $('enc-chips').classList.toggle('enc-hold', payPending());
+    // hide the quick buttons (Book a ticket / Check price / Departure times) while a booking is in progress
+    var lb0 = lastBooking(), activeBooking = !!(lb0 && lb0.booking && lb0.booking.status !== 'paid' && lb0.booking.status !== 'cancelled');
+    $('enc-chips').classList.toggle('enc-hold', activeBooking || payPending());
     Array.prototype.forEach.call(msgs.querySelectorAll('.enc-paid-btn'), function (btn) {
       var bm = lastBooking(btn.getAttribute('data-ref')), b = bm && bm.booking; if (!b) return;
       if (b.status === 'paid') setPaidBtn(btn, 'Payment confirmed ✓', false);
@@ -629,9 +640,7 @@ body.enc-open{overflow:hidden}
         auth: function (cb) { cb({ id: id, name: localStorage.getItem('enc_n') || name, phone: localStorage.getItem('enc_ph') || phone }); }
       });
       socket.on('history', function (h) {
-        // customer messages older than our latest reply count as seen
-        var la = 0; h.forEach(function (m) { if (m.from === 'agent' && m.t > la) la = m.t; });
-        h.forEach(function (m) { if (m.from === 'client' && m.t < la) m.seen = true; });
+        // Seen status comes only from the agent's explicit read event on the server.
         msgs.innerHTML = ''; store = {}; closeMenu(); h.forEach(add); updateUI();
         h.forEach(function (m) { if (m.t > lastT) lastT = m.t; });
         if (!h.length && !awaitingBooking) add({ from: 'agent', text: 'Welcome to Easy Coach. How may we assist you today? Kindly share your departure town, destination and travel date, and we will gladly arrange your booking.' });
